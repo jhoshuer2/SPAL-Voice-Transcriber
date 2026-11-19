@@ -349,19 +349,17 @@ export function Dashboard({ user }: { user: DashboardUser }) {
 
   return (
     <main className="shell">
-      <header className="brand">
-        <span className="brand__mark" aria-hidden>
-          <ReelIcon />
-        </span>
-        <div>
-          <h1 className="brand__title">{greeting()}{firstName ? `, ${firstName}` : ""}</h1>
-          <p className="brand__tagline">
-            Here's your library — drop in audio of <em>any</em> length, transcribe it whenever you're ready.
-          </p>
+      <header className="topbar">
+        <div className="topbar__brand">
+          <span className="topbar__mark" aria-hidden>
+            <ReelIcon />
+          </span>
+          <span className="topbar__name">Spool</span>
+          <span className="topbar__badge">Beta</span>
         </div>
-        <div className="brand__right">
+        <div className="topbar__right">
           {installPrompt && !installed && (
-            <button type="button" className="btn btn--ghost install-btn" onClick={handleInstallClick}>
+            <button type="button" className="btn btn--pill" onClick={handleInstallClick}>
               <DownloadIcon />
               <span>Install app</span>
             </button>
@@ -387,13 +385,25 @@ export function Dashboard({ user }: { user: DashboardUser }) {
                 </div>
               </div>
             ) : (
-              <a href="/signin" className="btn btn--ghost">
+              <a href="/signin" className="btn btn--pill">
                 Sign in
               </a>
             )}
           </div>
         </div>
       </header>
+
+      <section className="hero">
+        <span className="hero__mark" aria-hidden>
+          <ReelIcon />
+        </span>
+        <h1 className="hero__title">
+          {greeting()}{firstName ? `, ${firstName}` : ""} <span aria-hidden>👋</span>
+        </h1>
+        <p className="hero__tagline">
+          Drop in audio of any length — we'll handle the transcript.
+        </p>
+      </section>
 
       <section
         className="hero-actions"

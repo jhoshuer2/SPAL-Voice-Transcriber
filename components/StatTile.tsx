@@ -14,13 +14,15 @@ export function StatTile({
   tone?: "default" | "amber" | "sage";
 }) {
   return (
-    <div className={`stat-tile stat-tile--${tone}`}>
-      <div className="stat-tile__top">
-        <span className="stat-tile__label">{label}</span>
-        {icon && <span className="stat-tile__icon">{icon}</span>}
-      </div>
-      <span className="stat-tile__value">{value}</span>
-      {sub && <span className="stat-tile__sub">{sub}</span>}
+    <div className={`stat-pill stat-pill--${tone}`}>
+      {icon && <span className="stat-pill__icon">{icon}</span>}
+      <span className="stat-pill__text">
+        <span className="stat-pill__value">{value}</span>
+        <span className="stat-pill__label">
+          {label}
+          {sub ? <span className="stat-pill__sub"> · {sub}</span> : null}
+        </span>
+      </span>
     </div>
   );
 }
