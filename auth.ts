@@ -9,7 +9,19 @@ import { migrateOwner } from "@/lib/manifest";
 // just needs to know who's signed in well enough to scope the job
 // manifest (lib/manifest.ts) to one owner at a time.
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  providers: [Google],
+  providers: [
+    // Explicit on purpose: Auth.js v5's Google() auto-detects env vars
+    // named AUTH_GOOGLE_ID / AUTH_GOOGLE_SECRET by default, which isn't
+    // the GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET naming used elsewhere
+    // in this project (and in the README/.env.example). Left implicit,
+    // this silently sent no client_id to Google at all — which Google
+    // reports back as "Error 401: invalid_client, OAuth client was not
+    // found" since there's no client with an empty/undefined id.
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    }),
+  ],
   session: { strategy: "jwt" },
   pages: {
     signIn: "/signin",
