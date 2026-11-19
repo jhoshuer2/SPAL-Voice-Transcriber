@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { getJob } from "@/lib/manifest";
 import { fetchTranscript } from "@/lib/assemblyai";
 
@@ -6,7 +7,11 @@ import { fetchTranscript } from "@/lib/assemblyai";
 // demand rather than stored in the manifest (keeps that file small;
 // AssemblyAI holds on to completed transcripts for us).
 export async function GET(_request: Request, { params }: { params: { id: string } }) {
-  const job = await getJob(params.id);
+  const session = await auth();
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+  }
+  const job = await getJob(params.id, session.user.email);
   if (!job || !job.assemblyaiId) {
     return NextResponse.json({ error: "Not transcribed yet" }, { status: 404 });
   }

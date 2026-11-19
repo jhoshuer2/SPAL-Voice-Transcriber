@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { getJob, updateJob } from "@/lib/manifest";
 import { submitTranscript } from "@/lib/assemblyai";
 
@@ -7,7 +8,13 @@ import { submitTranscript } from "@/lib/assemblyai";
 // transcription runs on their infrastructure, so it's never bound by
 // this function's execution-time limit, no matter how long the audio is.
 export async function POST(_request: Request, { params }: { params: { id: string } }) {
-  const job = await getJob(params.id);
+  const session = await auth();
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+  }
+  const ownerEmail = session.user.email;
+
+  const job = await getJob(params.id, ownerEmail);
   if (!job) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   if (job.assemblyaiId && job.status !== "error") {
@@ -22,14 +29,14 @@ export async function POST(_request: Request, { params }: { params: { id: string
 
   const { ok, data } = await submitTranscript(job.url, apiKey);
   if (!ok) {
-    await updateJob(job.id, {
+    await updateJob(job.id, ownerEmail, {
       status: "error",
       error: data.error || "Failed to submit transcription",
     });
     return NextResponse.json({ error: data.error || "Failed to submit transcription" }, { status: 500 });
   }
 
-  const updated = await updateJob(job.id, {
+  const updated = await updateJob(job.id, ownerEmail, {
     assemblyaiId: data.id,
     status: "queued",
     startedAt: new Date().toISOString(),

@@ -95,13 +95,20 @@ async function refreshActiveJobs(jobs: Job[]): Promise<Job[]> {
   return fresh;
 }
 
-export async function listJobs(): Promise<Job[]> {
+// The manifest is still one shared file, but every job carries an
+// ownerEmail, and every read/write below is scoped to one signed-in
+// Google account. One person's upload is invisible to, and
+// untouchable by, anyone else who signs in.
+
+export async function listJobs(ownerEmail: string): Promise<Job[]> {
   const jobs = await refreshActiveJobs(await readManifest());
-  return [...jobs].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  return jobs
+    .filter((j) => j.ownerEmail === ownerEmail)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
-export async function getJob(id: string): Promise<Job | undefined> {
-  const jobs = await listJobs();
+export async function getJob(id: string, ownerEmail: string): Promise<Job | undefined> {
+  const jobs = await listJobs(ownerEmail);
   return jobs.find((j) => j.id === id);
 }
 
@@ -111,18 +118,22 @@ export async function addJob(job: Job): Promise<void> {
   await writeManifest(jobs);
 }
 
-export async function updateJob(id: string, patch: Partial<Job>): Promise<Job | undefined> {
+export async function updateJob(
+  id: string,
+  ownerEmail: string,
+  patch: Partial<Job>,
+): Promise<Job | undefined> {
   const jobs = await readManifest();
-  const idx = jobs.findIndex((j) => j.id === id);
+  const idx = jobs.findIndex((j) => j.id === id && j.ownerEmail === ownerEmail);
   if (idx === -1) return undefined;
   jobs[idx] = { ...jobs[idx], ...patch };
   await writeManifest(jobs);
   return jobs[idx];
 }
 
-export async function removeJob(id: string): Promise<Job | undefined> {
+export async function removeJob(id: string, ownerEmail: string): Promise<Job | undefined> {
   const jobs = await readManifest();
-  const idx = jobs.findIndex((j) => j.id === id);
+  const idx = jobs.findIndex((j) => j.id === id && j.ownerEmail === ownerEmail);
   if (idx === -1) return undefined;
   const [removed] = jobs.splice(idx, 1);
   await writeManifest(jobs);

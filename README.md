@@ -26,7 +26,18 @@ or share. Built to deploy on Vercel.
   concurrent writes can race and the last one wins — but it's fine for a
   personal/low-traffic tool and avoids standing up Postgres/KV. Swap the
   internals of `lib/manifest.ts` for a real datastore later if this gets
-  heavier concurrent use; nothing else needs to change.
+  heavier concurrent use; nothing else needs to change. The manifest file
+  itself is written with `cacheControlMaxAge: 0` and read with a
+  cache-busted URL — without that, Blob's CDN caching the same URL for up
+  to a year means a read right after a write can come back stale (this
+  previously caused jobs to silently vanish from the library).
+- **Auth:** Google sign-in via [Auth.js](https://authjs.dev) (`auth.ts`,
+  `middleware.ts`). Sessions are a signed JWT cookie — no session table.
+  Every `Job` carries an `ownerEmail`, and every manifest read/write in the
+  API routes is scoped to `auth()`'s current session, so signed-in users
+  each see only their own library even though the manifest file itself is
+  shared. `middleware.ts` gates every route except `/signin` and the
+  `/api/auth/*` OAuth callback.
 
 ## Deploy it
 
@@ -46,21 +57,36 @@ or share. Built to deploy on Vercel.
    Variables → add `ASSEMBLYAI_API_KEY` with that key, for all
    environments.
 
-5. **Redeploy** (Vercel will prompt you to redeploy after adding the env
-   var, or just push again).
+5. **Set up Google sign-in:**
+   - In [Google Cloud Console](https://console.cloud.google.com/apis/credentials),
+     create (or reuse) a project, then **Create Credentials → OAuth client
+     ID → Web application**.
+   - Authorized redirect URI: `https://<your-domain>/api/auth/callback/google`
+     (add both the production domain and any preview domain you use).
+   - Copy the **Client ID** and **Client secret**.
+   - In Vercel: Project → Settings → Environment Variables, add
+     `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `AUTH_SECRET` (generate
+     the latter with `openssl rand -base64 33`), for all environments.
 
-That's it — open the deployed URL, drop in a file (or several), hit
-**Transcribe** on whichever ones you want processed, and open each from
-the library once it's done.
+6. **Redeploy** (Vercel will prompt you to redeploy after adding env vars,
+   or just push again).
+
+That's it — open the deployed URL, sign in with Google, drop in a file (or
+several), hit **Transcribe** on whichever ones you want processed, and
+open each from the library once it's done. Each Google account gets its
+own private library.
 
 ## Local development
 
 ```bash
 npm install
-cp .env.example .env.local   # fill in ASSEMBLYAI_API_KEY
+cp .env.example .env.local   # fill in ASSEMBLYAI_API_KEY, GOOGLE_CLIENT_ID/SECRET, AUTH_SECRET
 vercel env pull .env.local   # if you want BLOB_READ_WRITE_TOKEN too (needs `vercel link` first)
 npm run dev
 ```
+
+For local Google sign-in, add `http://localhost:3000/api/auth/callback/google`
+as an extra authorized redirect URI on the same OAuth client.
 
 Note: Blob client uploads need a real token, so local dev without
 `vercel env pull` will fail at the upload step unless you set
@@ -68,8 +94,16 @@ Note: Blob client uploads need a real token, so local dev without
 
 ## What's deliberately left for later
 
-- **No auth / no privacy controls** — anyone with a transcript's URL can
-  view it. IDs aren't guessable, but they aren't access-controlled either.
+- **Transcript share-link pages (`/t/:id`) aren't access-controlled** —
+  the dashboard and all API routes are gated behind sign-in, but a
+  transcript's own page checks ownership via the API calls it makes
+  under the hood, not a public/private flag. Anyone you hand a specific
+  link to can still open it. Good enough for "share with a specific
+  person"; add an explicit visibility flag on `Job` if that's ever a
+  problem.
+- **One Google account per browser session** — there's no invite system
+  or shared-library concept; every signed-in Google account gets a
+  separate, private set of jobs in the same underlying manifest file.
 - **Manifest isn't transaction-safe** — see the "storage, not a database"
   note above. Fine at personal scale; a real race is unlikely but possible
   if two uploads/updates land in the same instant.

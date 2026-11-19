@@ -2,6 +2,8 @@ export type JobStatus = "uploaded" | "queued" | "processing" | "completed" | "er
 
 export type Job = {
   id: string;
+  /** Google account email that uploaded this file. Scopes the shared manifest to one owner. */
+  ownerEmail: string;
   filename: string;
   /** Blob pathname, used to delete the underlying file. */
   pathname: string;

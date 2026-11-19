@@ -769,6 +769,73 @@ a {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---------------------------------- sign-in ---------------------------------- */
+
+.signin-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.signin-card {
+  width: 100%;
+  max-width: 340px;
+  text-align: center;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 36px 28px 32px;
+}
+
+.signin-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0 0 8px;
+}
+
+.signin-sub {
+  font-size: 13.5px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  margin: 0 0 24px;
+}
+
+.signin-btn {
+  width: 100%;
+  padding: 11px 18px;
+  font-size: 13.5px;
+}
+
+/* ---------------------------------- user menu ---------------------------------- */
+
+.user-menu {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-menu__avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--indigo-soft);
+}
+
+.user-menu__email {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* ---------------------------------- mobile ---------------------------------- */
 
 @media (max-width: 640px) {
@@ -878,5 +945,9 @@ a {
   .transcript-body {
     padding: 20px 18px;
     font-size: 14.5px;
+  }
+
+  .user-menu__email {
+    display: none;
   }
 }

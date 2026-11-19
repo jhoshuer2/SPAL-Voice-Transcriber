@@ -1,14 +1,19 @@
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { addJob, listJobs } from "@/lib/manifest";
 import type { Job } from "@/lib/types";
 
-// GET /api/jobs — the dashboard's single source of truth. Also quietly
-// refreshes any job that's still queued/processing against AssemblyAI,
-// so the list is current whenever someone looks at it (see
-// lib/manifest.ts#refreshActiveJobs).
+// GET /api/jobs — the dashboard's single source of truth, scoped to
+// whoever's signed in. Also quietly refreshes any job that's still
+// queued/processing against AssemblyAI, so the list is current
+// whenever someone looks at it (see lib/manifest.ts#refreshActiveJobs).
 export async function GET() {
-  const jobs = await listJobs();
+  const session = await auth();
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+  }
+  const jobs = await listJobs(session.user.email);
   return NextResponse.json({ jobs });
 }
 
@@ -16,6 +21,11 @@ export async function GET() {
 // Upload and "create a job" are deliberately separate steps: a file can
 // sit here, uploaded but untranscribed, until it's deliberately sent off.
 export async function POST(request: Request) {
+  const session = await auth();
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+  }
+
   const body = (await request.json()) as {
     url?: string;
     pathname?: string;
@@ -30,6 +40,7 @@ export async function POST(request: Request) {
 
   const job: Job = {
     id: randomUUID(),
+    ownerEmail: session.user.email,
     filename: body.filename || body.pathname.split("/").pop() || "audio file",
     pathname: body.pathname,
     url: body.url,

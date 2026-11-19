@@ -1,10 +1,16 @@
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 
 // This route only brokers a signed upload token — the actual file bytes
 // go straight from the browser to Blob storage, never through this
 // function. That's what lets uploads of any size/length work on Vercel.
 export async function POST(request: Request): Promise<NextResponse> {
+  const session = await auth();
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+  }
+
   const body = (await request.json()) as HandleUploadBody;
 
   try {
