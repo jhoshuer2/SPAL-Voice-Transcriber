@@ -27,6 +27,35 @@ import { MeetingsMenu } from "@/components/MeetingsMenu";
 type LibraryView = "list" | "grid";
 const VIEW_STORAGE_KEY = "spool:library-view";
 
+// Ranks a job's progress so a poll can never silently walk it backward.
+// Blob storage reads can race a write (see lib/manifest.ts's own note on
+// this) — the 5s poll that starts the moment a job goes "active" was
+// landing on a pre-transcribe snapshot shortly after someone clicked
+// Transcribe, reverting the status to "uploaded" and making the button
+// reappear, as if the click hadn't registered.
+const STATUS_RANK: Record<Job["status"], number> = {
+  uploaded: 0,
+  queued: 1,
+  processing: 2,
+  completed: 3,
+  error: 3,
+};
+
+function mergeJobs(prev: Job[], incoming: Job[]): Job[] {
+  const prevById = new Map(prev.map((j) => [j.id, j]));
+  const byId = new Map<string, Job>();
+  for (const inc of incoming) {
+    const local = prevById.get(inc.id);
+    byId.set(inc.id, local && STATUS_RANK[local.status] > STATUS_RANK[inc.status] ? local : inc);
+  }
+  // A job added (or moved/renamed) locally that this snapshot doesn't
+  // have yet, for the same reason — keep it rather than drop it.
+  for (const j of prev) {
+    if (!byId.has(j.id)) byId.set(j.id, j);
+  }
+  return Array.from(byId.values()).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
 // Bundled with the app (public/sample/) so "try it" needs no upload at
 // all. Size is the asset's known byte length — fine to hardcode for a
 // fixed, checked-in file.
@@ -156,7 +185,7 @@ export function Dashboard({ user }: { user: DashboardUser }) {
     try {
       const res = await fetch("/api/jobs", { cache: "no-store" });
       const data = await res.json();
-      if (res.ok) setJobs(data.jobs ?? []);
+      if (res.ok) setJobs((prev) => mergeJobs(prev, data.jobs ?? []));
     } finally {
       setLoaded(true);
     }
