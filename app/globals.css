@@ -174,7 +174,21 @@ a {
 /* ---------------------------------- hero (plain) ---------------------------------- */
 
 .hero {
-  padding: 8px 0 20px;
+  position: relative;
+  padding: 28px 24px 32px;
+  margin-bottom: 4px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  /* A soft color-mesh instead of a flat panel — a few large, blurred
+     radial blooms in the brand's own indigo/green rather than a stock
+     photo, so it reads as "designed" without adding real weight or a
+     licensing question. Kept pastel so dark ink text stays legible
+     with no scrim needed, unlike a photographic hero would. */
+  background:
+    radial-gradient(520px 320px at 8% -10%, var(--indigo-soft) 0%, transparent 60%),
+    radial-gradient(480px 300px at 100% 0%, var(--green-soft) 0%, transparent 65%),
+    radial-gradient(600px 360px at 50% 120%, var(--indigo-dot) 0%, transparent 70%),
+    var(--card);
 }
 
 .hero__mark {
@@ -182,12 +196,14 @@ a {
 }
 
 .hero__title {
+  position: relative;
   font-size: 20px;
   font-weight: 600;
   margin: 0;
 }
 
 .hero__tagline {
+  position: relative;
   font-size: 14px;
   color: var(--text-dim);
   margin: 4px 0 0;
