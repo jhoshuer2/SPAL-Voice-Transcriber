@@ -768,3 +768,115 @@ a {
   color: var(--indigo);
   font-variant-numeric: tabular-nums;
 }
+
+/* ---------------------------------- mobile ---------------------------------- */
+
+@media (max-width: 640px) {
+  .shell {
+    padding: 28px 16px 72px;
+  }
+
+  .brand {
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .brand__mark {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+  }
+
+  .brand__mark svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .brand__title {
+    font-size: 19px;
+  }
+
+  .brand__tagline {
+    font-size: 13px;
+  }
+
+  .dropzone {
+    padding: 26px 16px;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin: 18px 0;
+  }
+
+  .stat-tile {
+    padding: 14px 14px 12px;
+  }
+
+  /* Pending-upload card: waveform controls on their own row, transfer
+     progress on the next — the fixed-width upload bar doesn't need to
+     compete with the waveform for space on a narrow screen. */
+  .attachment {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+
+  .attachment__side {
+    flex: 1 1 100%;
+    justify-content: space-between;
+    padding-left: 44px;
+  }
+
+  .upload-bar {
+    flex: 1;
+    width: auto;
+    max-width: 220px;
+  }
+
+  .waveform-bars {
+    height: 26px;
+  }
+
+  .waveform-duration {
+    display: none;
+  }
+
+  .job-row {
+    padding: 13px 14px;
+    gap: 10px;
+  }
+
+  .job-row__name {
+    max-width: 48vw;
+  }
+
+  .job-row__status {
+    flex: 1 1 100%;
+    order: 3;
+  }
+
+  .job-row__actions {
+    flex: 1 1 100%;
+    order: 4;
+    justify-content: flex-end;
+  }
+
+  .job-row__error {
+    max-width: 48vw;
+  }
+
+  .transcript-title {
+    font-size: 21px;
+  }
+
+  .transcript-actions {
+    flex-wrap: wrap;
+  }
+
+  .transcript-body {
+    padding: 20px 18px;
+    font-size: 14.5px;
+  }
+}

@@ -20,11 +20,22 @@ async function readManifest(): Promise<Job[]> {
   const entry = blobs.find((b) => b.pathname === MANIFEST_PATH);
   if (!entry) return [];
   try {
-    const res = await fetch(entry.url, { cache: "no-store" });
-    if (!res.ok) return [];
+    // Bust both our own fetch cache and the Blob CDN's edge cache. The
+    // manifest is overwritten in place (same URL, allowOverwrite), so
+    // without this a read right after a write can come back stale from
+    // an edge node — including stale-empty right after the very first
+    // write — which then gets baked back in as "the truth" by whatever
+    // writes next. That was silently erasing history.
+    const bustedUrl = `${entry.url}${entry.url.includes("?") ? "&" : "?"}t=${Date.now()}`;
+    const res = await fetch(bustedUrl, { cache: "no-store" });
+    if (!res.ok) {
+      console.error(`[manifest] read failed with status ${res.status}; treating as empty`);
+      return [];
+    }
     const data = await res.json();
     return Array.isArray(data?.jobs) ? (data.jobs as Job[]) : [];
-  } catch {
+  } catch (err) {
+    console.error("[manifest] read threw; treating as empty", err);
     return [];
   }
 }
@@ -35,6 +46,11 @@ async function writeManifest(jobs: Job[]): Promise<void> {
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: "application/json",
+    // Default cache is a full year at the edge. Since this same URL is
+    // overwritten on every change, that meant reads could keep serving
+    // an old (sometimes stale-empty) cached copy indefinitely. Keep this
+    // file effectively uncached.
+    cacheControlMaxAge: 0,
   });
 }
 
