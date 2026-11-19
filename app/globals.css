@@ -225,12 +225,33 @@ a {
   max-width: 440px;
 }
 
+/* ---------------------------------- section eyebrows ---------------------------------- */
+
+/* Two halves: what to do, then what's already been done. A small label
+   over each keeps that split legible instead of implicit in spacing alone. */
+.section-eyebrow {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  margin: 0 0 14px;
+}
+
+.section-eyebrow--done {
+  margin-top: 30px;
+}
+
 /* ---------------------------------- hero action cards ---------------------------------- */
 
 .hero-actions {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-areas:
+    "upload upload"
+    "sample folder";
+  gap: 12px;
   max-width: 860px;
   margin: 0 auto;
 }
@@ -322,40 +343,60 @@ a {
   line-height: 1.4;
 }
 
-/* Featured card — the dark, "try it now" tile the other two sit beside,
-   mirroring a hero section's single highlighted action among plain ones. */
-.action-card--sample {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: #fff;
-}
-
-.action-card--sample .action-card__icon {
-  background: rgba(255, 255, 255, 0.14);
-  color: #fff;
-}
-
-.action-card--sample .action-card__title {
-  color: #fff;
-}
-
-.action-card--sample .action-card__sub {
-  color: rgba(255, 255, 255, 0.62);
-}
-
-.action-card--sample:hover {
-  border-color: var(--ink);
-  box-shadow: 0 1px 1px rgba(16, 16, 24, 0.03), 0 16px 32px -10px rgba(16, 16, 24, 0.35);
+/* Featured card — upload is the primary, "do this first" action, so it
+   spans the top as a wider, bolder tile; sample and folder sit below it
+   as the secondary pair. */
+.action-card--upload {
+  grid-area: upload;
+  flex-direction: row;
+  align-items: center;
+  padding: 24px 26px;
+  background: var(--indigo-soft);
+  border-color: var(--indigo-soft);
 }
 
 .action-card--upload .action-card__icon {
-  background: var(--indigo-soft);
-  color: var(--indigo);
+  width: 48px;
+  height: 48px;
+  background: var(--indigo);
+  color: #fff;
+}
+
+.action-card--upload .action-card__icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.action-card--upload .action-card__title {
+  font-size: 16px;
+}
+
+.action-card--upload:hover {
+  border-color: var(--indigo);
 }
 
 .action-card--dragging {
-  border-color: var(--indigo);
+  border-color: var(--indigo) !important;
   box-shadow: 0 0 0 3px var(--indigo-soft);
+}
+
+.action-card--sample {
+  grid-area: sample;
+}
+
+.action-card--sample .action-card__icon {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.action-card--folder {
+  grid-area: folder;
+}
+
+.action-card--folder .action-card__icon,
+.action-card--form .action-card__icon {
+  background: #fdf1e3;
+  color: #b4690e;
 }
 
 .action-card--form {
@@ -366,11 +407,6 @@ a {
 
 .action-card--form:hover {
   transform: none;
-}
-
-.action-card--form .action-card__icon {
-  background: var(--indigo-soft);
-  color: var(--indigo);
 }
 
 .action-card__input {
@@ -1494,10 +1530,18 @@ a {
 
   .hero-actions {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "upload"
+      "sample"
+      "folder";
   }
 
   .action-card {
     padding: 15px 16px;
+  }
+
+  .action-card--upload {
+    padding: 18px 18px;
   }
 
   .topbar__right {

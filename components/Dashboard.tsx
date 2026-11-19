@@ -405,6 +405,8 @@ export function Dashboard({ user }: { user: DashboardUser }) {
         </p>
       </section>
 
+      <p className="section-eyebrow section-eyebrow--actions">Start here</p>
+
       <section
         className="hero-actions"
         onDragEnter={(e) => {
@@ -439,6 +441,20 @@ export function Dashboard({ user }: { user: DashboardUser }) {
 
         <button
           type="button"
+          className={`action-card action-card--upload ${dragging ? "action-card--dragging" : ""}`}
+          onClick={() => inputRef.current?.click()}
+        >
+          <span className="action-card__icon" aria-hidden>
+            <UploadIcon />
+          </span>
+          <span className="action-card__body">
+            <span className="action-card__title">Upload audio or video</span>
+            <span className="action-card__sub">Any length, any number of files at once — drop it anywhere here</span>
+          </span>
+        </button>
+
+        <button
+          type="button"
           className="action-card action-card--sample"
           onClick={handleTrySample}
           disabled={tryingSample}
@@ -448,12 +464,12 @@ export function Dashboard({ user }: { user: DashboardUser }) {
           </span>
           <span className="action-card__body">
             <span className="action-card__title">{tryingSample ? "Starting…" : "Try a 10-second sample"}</span>
-            <span className="action-card__sub">No upload needed — hear how a transcript turns out</span>
+            <span className="action-card__sub">No upload needed</span>
           </span>
         </button>
 
         {creatingFolder ? (
-          <form className="action-card action-card--form" onSubmit={handleCreateFolder}>
+          <form className="action-card action-card--form action-card--folder" onSubmit={handleCreateFolder}>
             <span className="action-card__icon" aria-hidden>
               <FolderIcon />
             </span>
@@ -478,30 +494,20 @@ export function Dashboard({ user }: { user: DashboardUser }) {
             </button>
           </form>
         ) : (
-          <button type="button" className="action-card" onClick={() => setCreatingFolder(true)}>
+          <button
+            type="button"
+            className="action-card action-card--folder"
+            onClick={() => setCreatingFolder(true)}
+          >
             <span className="action-card__icon" aria-hidden>
               <FolderIcon />
             </span>
             <span className="action-card__body">
               <span className="action-card__title">New folder</span>
-              <span className="action-card__sub">Group related recordings together</span>
+              <span className="action-card__sub">Group recordings together</span>
             </span>
           </button>
         )}
-
-        <button
-          type="button"
-          className={`action-card action-card--upload ${dragging ? "action-card--dragging" : ""}`}
-          onClick={() => inputRef.current?.click()}
-        >
-          <span className="action-card__icon" aria-hidden>
-            <UploadIcon />
-          </span>
-          <span className="action-card__body">
-            <span className="action-card__title">Upload audio or video</span>
-            <span className="action-card__sub">Any length, any number of files at once — drop it anywhere here</span>
-          </span>
-        </button>
       </section>
 
       {pending.length > 0 && (
@@ -539,6 +545,8 @@ export function Dashboard({ user }: { user: DashboardUser }) {
           ))}
         </section>
       )}
+
+      <p className="section-eyebrow section-eyebrow--done">So far</p>
 
       <section className="stats">
         <StatTile label="Files" value={String(stats.totalFiles)} icon={<StackIcon />} />
