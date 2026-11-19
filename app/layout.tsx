@@ -1,14 +1,29 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { PWARegister } from "@/components/PWARegister";
 
 export const metadata: Metadata = {
   title: "Spool — audio to transcript",
   description: "Drop in audio of any length, any number of files. Get a transcript back.",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Spool",
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: "#4b4ff0",
 };
 
 export default function RootLayout({
@@ -26,7 +41,10 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&display=swap"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <PWARegister />
+      </body>
     </html>
   );
 }

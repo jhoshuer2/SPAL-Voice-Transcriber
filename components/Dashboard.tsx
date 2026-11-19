@@ -14,8 +14,10 @@ import {
   DiscIcon,
   ListViewIcon,
   GridViewIcon,
-  PlusIcon,
   ChevronLeftIcon,
+  FolderIcon,
+  UploadIcon,
+  DownloadIcon,
 } from "@/components/icons";
 import type { Folder, Job } from "@/lib/types";
 import { formatBytes, formatHoursMinutes } from "@/lib/format";
@@ -24,6 +26,21 @@ import { SignInPrompt, type SignInPromptKind } from "@/components/SignInPrompt";
 
 type LibraryView = "list" | "grid";
 const VIEW_STORAGE_KEY = "spool:library-view";
+
+// Bundled with the app (public/sample/) so "try it" needs no upload at
+// all. Size is the asset's known byte length — fine to hardcode for a
+// fixed, checked-in file.
+const SAMPLE_AUDIO = {
+  pathname: "sample/welcome-sample.mp3",
+  filename: "Say hello to Spool.mp3",
+  size: 116342,
+  contentType: "audio/mpeg",
+};
+
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+};
 
 function greeting() {
   const h = new Date().getHours();
@@ -69,8 +86,45 @@ export function Dashboard({ user }: { user: DashboardUser }) {
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
+  const [tryingSample, setTryingSample] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [installed, setInstalled] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const dragDepth = useRef(0);
+
+  // "Install app" — Chrome/Edge/Android fire beforeinstallprompt when the
+  // PWA criteria (manifest + service worker) are met; we hold onto that
+  // event so the button can trigger it on demand instead of the browser's
+  // own (easy-to-miss) install affordance.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const standalone =
+      window.matchMedia?.("(display-mode: standalone)").matches ||
+      (window.navigator as unknown as { standalone?: boolean }).standalone === true;
+    if (standalone) setInstalled(true);
+
+    function onBeforeInstallPrompt(e: Event) {
+      e.preventDefault();
+      setInstallPrompt(e as BeforeInstallPromptEvent);
+    }
+    function onInstalled() {
+      setInstalled(true);
+      setInstallPrompt(null);
+    }
+    window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+    window.addEventListener("appinstalled", onInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
+  }, []);
+
+  async function handleInstallClick() {
+    if (!installPrompt) return;
+    await installPrompt.prompt();
+    await installPrompt.userChoice;
+    setInstallPrompt(null);
+  }
 
   // The grid/list choice is a display preference, not data — remember it
   // locally per browser rather than round-tripping it through the API.
@@ -219,6 +273,35 @@ export function Dashboard({ user }: { user: DashboardUser }) {
     refreshJobs();
   }
 
+  async function handleTrySample() {
+    if (tryingSample) return;
+    setTryingSample(true);
+    try {
+      const url = `${window.location.origin}/${SAMPLE_AUDIO.pathname}`;
+      const res = await fetch("/api/jobs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url,
+          pathname: SAMPLE_AUDIO.pathname,
+          filename: SAMPLE_AUDIO.filename,
+          size: SAMPLE_AUDIO.size,
+          contentType: SAMPLE_AUDIO.contentType,
+          folderId: currentFolderId,
+        }),
+      });
+      if (!res.ok) throw new Error("Could not add the sample");
+      const { job } = await res.json();
+      await fetch(`/api/jobs/${job.id}/transcribe`, { method: "POST" });
+      refreshJobs();
+    } catch {
+      // Best effort — if this fails the library just won't show a new
+      // row, which is self-evident, so there's nothing useful to surface.
+    } finally {
+      setTryingSample(false);
+    }
+  }
+
   async function handleCreateFolder(e: React.FormEvent) {
     e.preventDefault();
     const name = newFolderName.trim();
@@ -276,36 +359,44 @@ export function Dashboard({ user }: { user: DashboardUser }) {
             Here's your library — drop in audio of <em>any</em> length, transcribe it whenever you're ready.
           </p>
         </div>
-        <div className="user-menu">
-          {user ? (
-            <div className="user-menu__trigger">
-              {user.image ? (
-                <img src={user.image} alt="" className="user-menu__avatar" />
-              ) : (
-                <span className="user-menu__avatar user-menu__avatar--fallback" aria-hidden>
-                  {(user.name || user.email || "?").charAt(0).toUpperCase()}
-                </span>
-              )}
-              <div className="user-menu__dropdown">
-                {user.name && <span className="user-menu__name">{user.name}</span>}
-                {user.email && <span className="user-menu__email">{user.email}</span>}
-                <form action={signOutAction}>
-                  <button type="submit" className="btn btn--ghost user-menu__signout" title="Sign out">
-                    Sign out
-                  </button>
-                </form>
-              </div>
-            </div>
-          ) : (
-            <a href="/signin" className="btn btn--ghost">
-              Sign in
-            </a>
+        <div className="brand__right">
+          {installPrompt && !installed && (
+            <button type="button" className="btn btn--ghost install-btn" onClick={handleInstallClick}>
+              <DownloadIcon />
+              <span>Install app</span>
+            </button>
           )}
+          <div className="user-menu">
+            {user ? (
+              <div className="user-menu__trigger">
+                {user.image ? (
+                  <img src={user.image} alt="" className="user-menu__avatar" />
+                ) : (
+                  <span className="user-menu__avatar user-menu__avatar--fallback" aria-hidden>
+                    {(user.name || user.email || "?").charAt(0).toUpperCase()}
+                  </span>
+                )}
+                <div className="user-menu__dropdown">
+                  {user.name && <span className="user-menu__name">{user.name}</span>}
+                  {user.email && <span className="user-menu__email">{user.email}</span>}
+                  <form action={signOutAction}>
+                    <button type="submit" className="btn btn--ghost user-menu__signout" title="Sign out">
+                      Sign out
+                    </button>
+                  </form>
+                </div>
+              </div>
+            ) : (
+              <a href="/signin" className="btn btn--ghost">
+                Sign in
+              </a>
+            )}
+          </div>
         </div>
       </header>
 
       <section
-        className={`dropzone ${dragging ? "dropzone--active" : ""}`}
+        className="hero-actions"
         onDragEnter={(e) => {
           e.preventDefault();
           dragDepth.current += 1;
@@ -323,9 +414,6 @@ export function Dashboard({ user }: { user: DashboardUser }) {
           setDragging(false);
           if (e.dataTransfer.files?.length) handleFiles(e.dataTransfer.files);
         }}
-        onClick={() => inputRef.current?.click()}
-        role="button"
-        tabIndex={0}
       >
         <input
           ref={inputRef}
@@ -338,11 +426,72 @@ export function Dashboard({ user }: { user: DashboardUser }) {
             e.target.value = "";
           }}
         />
-        <span className="dropzone__icon" aria-hidden>
-          ⇪
-        </span>
-        <span className="dropzone__label">Drop audio files here, or click to browse</span>
-        <span className="dropzone__hint">Any length, any number of files at once — uploads go straight to storage</span>
+
+        <button
+          type="button"
+          className="action-card action-card--sample"
+          onClick={handleTrySample}
+          disabled={tryingSample}
+        >
+          <span className="action-card__icon" aria-hidden>
+            <PulseIcon />
+          </span>
+          <span className="action-card__body">
+            <span className="action-card__title">{tryingSample ? "Starting…" : "Try a 10-second sample"}</span>
+            <span className="action-card__sub">No upload needed — hear how a transcript turns out</span>
+          </span>
+        </button>
+
+        {creatingFolder ? (
+          <form className="action-card action-card--form" onSubmit={handleCreateFolder}>
+            <span className="action-card__icon" aria-hidden>
+              <FolderIcon />
+            </span>
+            <input
+              autoFocus
+              className="action-card__input"
+              placeholder="Folder name"
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              onBlur={() => {
+                if (!newFolderName.trim()) setCreatingFolder(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  setCreatingFolder(false);
+                  setNewFolderName("");
+                }
+              }}
+            />
+            <button type="submit" className="btn btn--amber action-card__submit">
+              Create
+            </button>
+          </form>
+        ) : (
+          <button type="button" className="action-card" onClick={() => setCreatingFolder(true)}>
+            <span className="action-card__icon" aria-hidden>
+              <FolderIcon />
+            </span>
+            <span className="action-card__body">
+              <span className="action-card__title">New folder</span>
+              <span className="action-card__sub">Group related recordings together</span>
+            </span>
+          </button>
+        )}
+
+        <button
+          type="button"
+          className={`action-card action-card--upload ${dragging ? "action-card--dragging" : ""}`}
+          onClick={() => inputRef.current?.click()}
+        >
+          <span className="action-card__icon" aria-hidden>
+            <UploadIcon />
+          </span>
+          <span className="action-card__body">
+            <span className="action-card__title">Upload audio or video</span>
+            <span className="action-card__sub">Any length, any number of files at once — drop it anywhere here</span>
+          </span>
+        </button>
       </section>
 
       {pending.length > 0 && (
@@ -407,36 +556,6 @@ export function Dashboard({ user }: { user: DashboardUser }) {
           )}
 
           <div className="library__toolbar-actions">
-            {!currentFolder &&
-              (creatingFolder ? (
-                <form className="new-folder-form" onSubmit={handleCreateFolder}>
-                  <input
-                    autoFocus
-                    className="new-folder-form__input"
-                    placeholder="Folder name"
-                    value={newFolderName}
-                    onChange={(e) => setNewFolderName(e.target.value)}
-                    onBlur={() => {
-                      if (!newFolderName.trim()) setCreatingFolder(false);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Escape") {
-                        setCreatingFolder(false);
-                        setNewFolderName("");
-                      }
-                    }}
-                  />
-                  <button type="submit" className="btn btn--amber">
-                    Create
-                  </button>
-                </form>
-              ) : (
-                <button type="button" className="btn btn--ghost" onClick={() => setCreatingFolder(true)}>
-                  <PlusIcon />
-                  New folder
-                </button>
-              ))}
-
             <div className="view-toggle" role="group" aria-label="Library view">
               <button
                 type="button"

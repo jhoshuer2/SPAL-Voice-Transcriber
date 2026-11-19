@@ -116,6 +116,26 @@ export function ChevronLeftIcon() {
   );
 }
 
+export function UploadIcon() {
+  return (
+    <svg viewBox="0 0 24 24" {...common}>
+      <path d="M12 4v11" />
+      <path d="M7.5 8.5 12 4l4.5 4.5" />
+      <path d="M5 16.5v2A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5v-2" />
+    </svg>
+  );
+}
+
+export function DownloadIcon() {
+  return (
+    <svg viewBox="0 0 24 24" {...common}>
+      <path d="M12 4v11" />
+      <path d="M7.5 11.5 12 16l4.5-4.5" />
+      <path d="M5 16.5v2A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5v-2" />
+    </svg>
+  );
+}
+
 export function ReelIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none">
