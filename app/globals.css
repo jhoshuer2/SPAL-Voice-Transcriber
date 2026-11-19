@@ -708,9 +708,8 @@ a {
 
 .library__list {
   background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
   overflow: hidden;
 }
 
@@ -964,17 +963,15 @@ a {
   gap: 10px;
   padding: 18px 12px 14px;
   background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
   cursor: pointer;
-  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  transition: border-color 0.15s ease;
   text-align: center;
 }
 
 .tile:hover {
-  box-shadow: var(--shadow-card-hover);
-  border-color: var(--border-strong);
+  border-color: var(--text-dim);
 }
 
 .job-tile {
@@ -984,7 +981,7 @@ a {
 .tile__thumb {
   width: 56px;
   height: 56px;
-  border-radius: 16px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
