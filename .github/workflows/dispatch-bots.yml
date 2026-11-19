@@ -17,4 +17,4 @@ jobs:
       - name: Call dispatch-bots
         run: |
           curl -fsS -X GET "https://spal-voice-transcriber.vercel.app/api/cron/dispatch-bots" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+            -H "Authorization: Bearer ${{ secrets.SPAL_TRANSCRIBER }}"
