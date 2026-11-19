@@ -1,8 +1,13 @@
 // Thin wrapper around Recall.ai's bot API — one unified API that joins
 // Zoom, Google Meet, Microsoft Teams and Whereby calls as a participant
 // and records them. https://docs.recall.ai
-
-const API_BASE = "https://us-west-2.recall.ai/api/v1";
+//
+// Recall's API is region-scoped — a key created in one region's
+// dashboard only works against that region's host. Our workspace is
+// eu-central-1 (visible in its dashboard URL), so that's hardcoded
+// here rather than guessed; if the workspace ever moves regions, this
+// is the one line to change.
+const API_BASE = "https://eu-central-1.recall.ai/api/v1";
 
 function apiKey() {
   const key = process.env.RECALL_API_KEY;
