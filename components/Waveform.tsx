@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const BARS = 56;
+const BARS = 32;
+const DOTS_PER_COL = 7;
 // Decoding the whole file client-side to draw real peaks is fine for
 // a few-minute voice memo but not for a multi-hour recording — so
 // above this size we skip decoding and draw a calm placeholder instead.
@@ -101,16 +102,22 @@ export function Waveform({ file }: { file: File }) {
         {playing ? "❚❚" : "▶"}
       </button>
       <div className="waveform-bars" aria-hidden>
-        {peaks.map((v, i) => (
-          <span
-            key={i}
-            className="waveform-bar"
-            style={{
-              height: `${Math.max(v * 100, 10)}%`,
-              opacity: i / BARS <= progress ? 1 : 0.4,
-            }}
-          />
-        ))}
+        {peaks.map((v, i) => {
+          const lit = Math.max(1, Math.round(v * DOTS_PER_COL));
+          const played = i / BARS <= progress;
+          return (
+            <div key={i} className="waveform-col">
+              {Array.from({ length: DOTS_PER_COL }, (_, j) => (
+                <span
+                  key={j}
+                  className={`waveform-dot ${
+                    j < lit ? (played ? "waveform-dot--played" : "waveform-dot--active") : ""
+                  }`}
+                />
+              ))}
+            </div>
+          );
+        })}
       </div>
       <span className="waveform-duration">{duration !== null ? formatDuration(duration) : "--:--"}</span>
     </div>

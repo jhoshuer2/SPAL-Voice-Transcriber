@@ -5,8 +5,16 @@ import { upload } from "@vercel/blob/client";
 import { Waveform } from "@/components/Waveform";
 import { StatTile } from "@/components/StatTile";
 import { JobRow } from "@/components/JobRow";
+import { ReelIcon, StackIcon, CheckIcon, PulseIcon, DiscIcon } from "@/components/icons";
 import type { Job } from "@/lib/types";
 import { formatBytes, formatHoursMinutes } from "@/lib/format";
+
+function greeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 18) return "Good afternoon";
+  return "Good evening";
+}
 
 type PendingUpload = {
   key: string;
@@ -128,16 +136,14 @@ export default function Home() {
 
   return (
     <main className="shell">
-      <div className="grain" aria-hidden />
-
       <header className="brand">
         <span className="brand__mark" aria-hidden>
-          ◎
+          <ReelIcon />
         </span>
         <div>
-          <h1 className="brand__title">Spool</h1>
+          <h1 className="brand__title">{greeting()}, Joshua</h1>
           <p className="brand__tagline">
-            Drop in audio of <em>any</em> length. Keep it here until you're ready — then get a transcript back.
+            Here's your library — drop in audio of <em>any</em> length, transcribe it whenever you're ready.
           </p>
         </div>
       </header>
@@ -220,13 +226,14 @@ export default function Home() {
       )}
 
       <section className="stats">
-        <StatTile label="Files" value={String(stats.totalFiles)} />
-        <StatTile label="Transcribed" value={String(stats.completed)} tone="sage" />
-        <StatTile label="In progress" value={String(stats.inProgress)} tone="amber" />
+        <StatTile label="Files" value={String(stats.totalFiles)} icon={<StackIcon />} />
+        <StatTile label="Transcribed" value={String(stats.completed)} tone="sage" icon={<CheckIcon />} />
+        <StatTile label="In progress" value={String(stats.inProgress)} tone="amber" icon={<PulseIcon />} />
         <StatTile
           label="Storage used"
           value={formatBytes(stats.storageBytes)}
           sub={stats.audioSeconds ? `${formatHoursMinutes(stats.audioSeconds)} of audio` : undefined}
+          icon={<DiscIcon />}
         />
       </section>
 

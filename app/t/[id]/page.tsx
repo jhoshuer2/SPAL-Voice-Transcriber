@@ -99,8 +99,6 @@ export default function TranscriptPage() {
 
   return (
     <main className="shell shell--narrow">
-      <div className="grain" aria-hidden />
-
       <Link href="/" className="back-link">
         ← Library
       </Link>
@@ -119,9 +117,10 @@ export default function TranscriptPage() {
 
       {!err && (job?.status === "queued" || job?.status === "processing") && (
         <div className="rec-indicator rec-indicator--large">
-          <span className="rec-dot" aria-hidden />
-          <span className="rec-track">
-            <span className="rec-sweep" />
+          <span className="rec-track" aria-hidden>
+            {Array.from({ length: 6 }, (_, i) => (
+              <span key={i} />
+            ))}
           </span>
           <span className="rec-label">
             {job.status === "queued" ? "Queued" : "Transcribing"} · {formatDuration(elapsed)} elapsed

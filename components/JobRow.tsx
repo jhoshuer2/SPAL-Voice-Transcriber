@@ -4,6 +4,15 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { Job } from "@/lib/types";
 import { formatBytes, formatDuration, formatRelativeTime } from "@/lib/format";
+import { MicIcon, CheckIcon, AlertIcon, PulseIcon } from "@/components/icons";
+
+const STATUS_ICON: Record<Job["status"], JSX.Element> = {
+  uploaded: <MicIcon />,
+  queued: <PulseIcon />,
+  processing: <PulseIcon />,
+  completed: <CheckIcon />,
+  error: <AlertIcon />,
+};
 
 const STATUS_LABEL: Record<Job["status"], string> = {
   uploaded: "In storage",
@@ -53,7 +62,9 @@ export function JobRow({
   return (
     <div className={`job-row job-row--${job.status}`}>
       <div className="job-row__main">
-        <span className={`status-dot status-dot--${job.status}`} aria-hidden />
+        <span className="job-row__icon" aria-hidden>
+          {STATUS_ICON[job.status]}
+        </span>
         <div className="job-row__info">
           <span className="job-row__name" title={job.filename}>
             {job.filename}
@@ -70,9 +81,10 @@ export function JobRow({
       <div className="job-row__status">
         {active ? (
           <div className="rec-indicator">
-            <span className="rec-dot" aria-hidden />
-            <span className="rec-track">
-              <span className="rec-sweep" />
+            <span className="rec-track" aria-hidden>
+              {Array.from({ length: 5 }, (_, i) => (
+                <span key={i} />
+              ))}
             </span>
             <span className="rec-label">
               {STATUS_LABEL[job.status]}
