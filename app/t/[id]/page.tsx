@@ -1,36 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
+import type { Job } from "@/lib/types";
+import { formatDuration } from "@/lib/format";
 
-type Utterance = {
-  speaker: string;
-  text: string;
-  start: number;
-  end: number;
-};
-
-type TranscriptData = {
-  id: string;
-  status: "queued" | "processing" | "completed" | "error";
-  text?: string;
-  utterances?: Utterance[];
-  error?: string;
-};
-
-function formatTime(ms: number) {
-  const totalSeconds = Math.floor(ms / 1000);
-  const h = Math.floor(totalSeconds / 3600);
-  const m = Math.floor((totalSeconds % 3600) / 60);
-  const s = totalSeconds % 60;
-  const pad = (n: number) => n.toString().padStart(2, "0");
-  return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
-}
+type Utterance = { speaker: string; text: string; start: number; end: number };
+type TranscriptData = { text?: string; utterances?: Utterance[] };
 
 function transcriptToText(data: TranscriptData) {
   if (data.utterances && data.utterances.length > 0) {
     return data.utterances
-      .map((u) => `[${formatTime(u.start)}] Speaker ${u.speaker}: ${u.text}`)
+      .map((u) => `[${formatDuration(u.start / 1000)}] Speaker ${u.speaker}: ${u.text}`)
       .join("\n\n");
   }
   return data.text ?? "";
@@ -38,9 +20,11 @@ function transcriptToText(data: TranscriptData) {
 
 export default function TranscriptPage() {
   const params = useParams<{ id: string }>();
-  const [data, setData] = useState<TranscriptData | null>(null);
+  const [job, setJob] = useState<Job | null>(null);
+  const [transcript, setTranscript] = useState<TranscriptData | null>(null);
   const [err, setErr] = useState("");
   const [copied, setCopied] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -48,17 +32,17 @@ export default function TranscriptPage() {
 
     async function poll() {
       try {
-        const res = await fetch(`/api/status/${params.id}`);
+        const res = await fetch(`/api/jobs/${params.id}`, { cache: "no-store" });
         const json = await res.json();
         if (!active) return;
 
         if (!res.ok) {
-          setErr(json.error ?? "Failed to load transcript");
+          setErr(json.error ?? "Failed to load this file");
           return;
         }
 
-        setData(json);
-        if (json.status === "queued" || json.status === "processing") {
+        setJob(json.job as Job);
+        if (json.job.status === "queued" || json.job.status === "processing") {
           timer = setTimeout(poll, 4000);
         }
       } catch (e) {
@@ -73,14 +57,36 @@ export default function TranscriptPage() {
     };
   }, [params.id]);
 
+  useEffect(() => {
+    if (job?.status !== "completed" || !job.assemblyaiId) return;
+    let active = true;
+    fetch(`/api/jobs/${params.id}/transcript`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (active) setTranscript(data);
+      });
+    return () => {
+      active = false;
+    };
+  }, [job?.status, job?.assemblyaiId, params.id]);
+
+  useEffect(() => {
+    if (!job?.startedAt || (job.status !== "queued" && job.status !== "processing")) return;
+    const start = new Date(job.startedAt).getTime();
+    const tick = () => setElapsed(Math.max(0, Math.floor((Date.now() - start) / 1000)));
+    tick();
+    const t = setInterval(tick, 1000);
+    return () => clearInterval(t);
+  }, [job?.startedAt, job?.status]);
+
   function download() {
-    if (!data) return;
-    const body = transcriptToText(data);
+    if (!transcript) return;
+    const body = transcriptToText(transcript);
     const blob = new Blob([body], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `transcript-${params.id}.txt`;
+    a.download = `${job?.filename?.replace(/\.[^/.]+$/, "") || "transcript"}.txt`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -92,41 +98,71 @@ export default function TranscriptPage() {
   }
 
   return (
-    <main style={{ maxWidth: 720, margin: "80px auto", padding: "0 24px" }}>
-      <h1>Transcript</h1>
+    <main className="shell shell--narrow">
+      <div className="grain" aria-hidden />
 
-      {err && <p style={{ color: "#c0392b" }}>{err}</p>}
+      <Link href="/" className="back-link">
+        ← Library
+      </Link>
 
-      {!err && !data && <p>Loading…</p>}
+      <h1 className="transcript-title">{job?.filename ?? "Transcript"}</h1>
 
-      {!err && data && (data.status === "queued" || data.status === "processing") && (
-        <p style={{ color: "#555" }}>
-          Status: {data.status}… this page updates on its own. Longer
-          recordings can take a few minutes.
+      {err && <p className="error-text">{err}</p>}
+
+      {!err && !job && <p className="library__empty">Loading…</p>}
+
+      {!err && job?.status === "uploaded" && (
+        <p className="library__empty">
+          This file hasn't been sent for transcription yet. Head back to the library to start it.
         </p>
       )}
 
-      {!err && data?.status === "error" && (
-        <p style={{ color: "#c0392b" }}>Transcription failed: {data.error}</p>
+      {!err && (job?.status === "queued" || job?.status === "processing") && (
+        <div className="rec-indicator rec-indicator--large">
+          <span className="rec-dot" aria-hidden />
+          <span className="rec-track">
+            <span className="rec-sweep" />
+          </span>
+          <span className="rec-label">
+            {job.status === "queued" ? "Queued" : "Transcribing"} · {formatDuration(elapsed)} elapsed
+          </span>
+        </div>
+      )}
+      {!err && (job?.status === "queued" || job?.status === "processing") && (
+        <p className="library__empty" style={{ marginTop: 12 }}>
+          This page checks in on its own — longer recordings can take a few minutes.
+        </p>
       )}
 
-      {!err && data?.status === "completed" && (
+      {!err && job?.status === "error" && (
+        <p className="error-text">Transcription failed: {job.error}</p>
+      )}
+
+      {!err && job?.status === "completed" && (
         <>
-          <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
-            <button onClick={download}>Download .txt</button>
-            <button onClick={copyLink}>{copied ? "Copied!" : "Copy share link"}</button>
+          <div className="transcript-actions">
+            <button type="button" className="btn btn--amber" onClick={download} disabled={!transcript}>
+              Download .txt
+            </button>
+            <button type="button" className="btn btn--ghost" onClick={copyLink}>
+              {copied ? "Copied!" : "Copy share link"}
+            </button>
           </div>
-          <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.6 }}>
-            {data.utterances && data.utterances.length > 0
-              ? data.utterances.map((u, i) => (
-                  <p key={i}>
-                    <strong>
-                      [{formatTime(u.start)}] Speaker {u.speaker}:
-                    </strong>{" "}
-                    {u.text}
-                  </p>
-                ))
-              : data.text}
+          <div className="transcript-body">
+            {!transcript ? (
+              <p className="library__empty">Loading transcript…</p>
+            ) : transcript.utterances && transcript.utterances.length > 0 ? (
+              transcript.utterances.map((u, i) => (
+                <p key={i}>
+                  <span className="transcript-body__meta">
+                    [{formatDuration(u.start / 1000)}] Speaker {u.speaker}:
+                  </span>{" "}
+                  {u.text}
+                </p>
+              ))
+            ) : (
+              <p>{transcript.text}</p>
+            )}
           </div>
         </>
       )}

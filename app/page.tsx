@@ -1,88 +1,249 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
-import { useRouter } from "next/navigation";
+import { Waveform } from "@/components/Waveform";
+import { StatTile } from "@/components/StatTile";
+import { JobRow } from "@/components/JobRow";
+import type { Job } from "@/lib/types";
+import { formatBytes, formatHoursMinutes } from "@/lib/format";
 
-type Stage = "idle" | "uploading" | "starting" | "error";
+type PendingUpload = {
+  key: string;
+  file: File;
+  progress: number;
+  stage: "uploading" | "registering" | "error";
+  error?: string;
+};
+
+const ACCEPT = "audio/*,video/mp4,video/quicktime,video/webm";
+
+let keySeed = 0;
+function nextKey() {
+  keySeed += 1;
+  return `pending-${Date.now()}-${keySeed}`;
+}
 
 export default function Home() {
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [pending, setPending] = useState<PendingUpload[]>([]);
+  const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [stage, setStage] = useState<Stage>("idle");
-  const [progress, setProgress] = useState(0);
-  const [error, setError] = useState("");
-  const router = useRouter();
+  const dragDepth = useRef(0);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const file = inputRef.current?.files?.[0];
-    if (!file) return;
+  const refreshJobs = useCallback(async () => {
+    try {
+      const res = await fetch("/api/jobs", { cache: "no-store" });
+      const data = await res.json();
+      if (res.ok) setJobs(data.jobs ?? []);
+    } finally {
+      setLoaded(true);
+    }
+  }, []);
 
-    setError("");
-    setStage("uploading");
-    setProgress(0);
+  useEffect(() => {
+    refreshJobs();
+  }, [refreshJobs]);
+
+  const hasActive = useMemo(
+    () => jobs.some((j) => j.status === "queued" || j.status === "processing"),
+    [jobs],
+  );
+
+  useEffect(() => {
+    if (!hasActive) return;
+    const t = setInterval(refreshJobs, 5000);
+    return () => clearInterval(t);
+  }, [hasActive, refreshJobs]);
+
+  const stats = useMemo(() => {
+    const totalFiles = jobs.length;
+    const completed = jobs.filter((j) => j.status === "completed").length;
+    const inProgress = jobs.filter((j) => j.status === "queued" || j.status === "processing").length;
+    const storageBytes = jobs.reduce((sum, j) => sum + (j.size || 0), 0);
+    const audioSeconds = jobs.reduce((sum, j) => sum + (j.durationSeconds || 0), 0);
+    return { totalFiles, completed, inProgress, storageBytes, audioSeconds };
+  }, [jobs]);
+
+  const startUpload = useCallback(async (file: File) => {
+    const key = nextKey();
+    setPending((p) => [...p, { key, file, progress: 0, stage: "uploading" }]);
 
     try {
       const blob = await upload(file.name, file, {
         access: "public",
         handleUploadUrl: "/api/upload",
-        onUploadProgress: ({ percentage }) => setProgress(Math.round(percentage)),
+        onUploadProgress: ({ percentage }) =>
+          setPending((p) => p.map((u) => (u.key === key ? { ...u, progress: Math.round(percentage) } : u))),
       });
 
-      setStage("starting");
-      const res = await fetch("/api/transcribe", {
+      setPending((p) => p.map((u) => (u.key === key ? { ...u, stage: "registering" } : u)));
+
+      const res = await fetch("/api/jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ audioUrl: blob.url, filename: file.name }),
+        body: JSON.stringify({
+          url: blob.url,
+          pathname: blob.pathname,
+          filename: file.name,
+          size: file.size,
+          contentType: file.type || null,
+        }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Could not start transcription");
+      if (!res.ok) throw new Error((await res.json()).error || "Could not register upload");
 
-      router.push(`/t/${data.id}`);
+      setPending((p) => p.filter((u) => u.key !== key));
+      refreshJobs();
     } catch (err) {
-      setStage("error");
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      setPending((p) =>
+        p.map((u) =>
+          u.key === key
+            ? { ...u, stage: "error", error: err instanceof Error ? err.message : "Upload failed" }
+            : u,
+        ),
+      );
     }
+  }, [refreshJobs]);
+
+  function handleFiles(fileList: FileList | File[]) {
+    const files = Array.from(fileList);
+    for (const file of files) startUpload(file);
   }
 
-  const busy = stage === "uploading" || stage === "starting";
+  function dismissPending(key: string) {
+    setPending((p) => p.filter((u) => u.key !== key));
+  }
+
+  async function handleTranscribe(id: string) {
+    await fetch(`/api/jobs/${id}/transcribe`, { method: "POST" });
+    refreshJobs();
+  }
+
+  async function handleDelete(id: string) {
+    setJobs((j) => j.filter((job) => job.id !== id));
+    await fetch(`/api/jobs/${id}`, { method: "DELETE" });
+    refreshJobs();
+  }
 
   return (
-    <main style={{ maxWidth: 560, margin: "80px auto", padding: "0 24px" }}>
-      <h1>Audio → Transcript</h1>
-      <p style={{ color: "#555" }}>
-        Upload an audio file — any length — and get a transcript you can download
-        or share as a link.
-      </p>
+    <main className="shell">
+      <div className="grain" aria-hidden />
 
-      <form onSubmit={handleSubmit} style={{ marginTop: 32 }}>
+      <header className="brand">
+        <span className="brand__mark" aria-hidden>
+          ◎
+        </span>
+        <div>
+          <h1 className="brand__title">Spool</h1>
+          <p className="brand__tagline">
+            Drop in audio of <em>any</em> length. Keep it here until you're ready — then get a transcript back.
+          </p>
+        </div>
+      </header>
+
+      <section
+        className={`dropzone ${dragging ? "dropzone--active" : ""}`}
+        onDragEnter={(e) => {
+          e.preventDefault();
+          dragDepth.current += 1;
+          setDragging(true);
+        }}
+        onDragOver={(e) => e.preventDefault()}
+        onDragLeave={(e) => {
+          e.preventDefault();
+          dragDepth.current -= 1;
+          if (dragDepth.current <= 0) setDragging(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          dragDepth.current = 0;
+          setDragging(false);
+          if (e.dataTransfer.files?.length) handleFiles(e.dataTransfer.files);
+        }}
+        onClick={() => inputRef.current?.click()}
+        role="button"
+        tabIndex={0}
+      >
         <input
           ref={inputRef}
           type="file"
-          accept="audio/*,video/mp4,video/quicktime,video/webm"
-          required
-          disabled={busy}
+          accept={ACCEPT}
+          multiple
+          hidden
+          onChange={(e) => {
+            if (e.target.files?.length) handleFiles(e.target.files);
+            e.target.value = "";
+          }}
         />
-        <div style={{ marginTop: 16 }}>
-          <button type="submit" disabled={busy}>
-            {stage === "uploading"
-              ? `Uploading… ${progress}%`
-              : stage === "starting"
-                ? "Starting transcription…"
-                : "Transcribe"}
-          </button>
-        </div>
-      </form>
+        <span className="dropzone__icon" aria-hidden>
+          ⇪
+        </span>
+        <span className="dropzone__label">Drop audio files here, or click to browse</span>
+        <span className="dropzone__hint">Any length, any number of files at once — uploads go straight to storage</span>
+      </section>
 
-      {stage === "error" && (
-        <p style={{ color: "#c0392b", marginTop: 16 }}>{error}</p>
+      {pending.length > 0 && (
+        <section className="attachments">
+          {pending.map((u) => (
+            <div key={u.key} className={`attachment ${u.stage === "error" ? "attachment--error" : ""}`}>
+              {u.stage !== "error" ? (
+                <Waveform file={u.file} />
+              ) : (
+                <div className="attachment__error-body">
+                  <span className="attachment__name">{u.file.name}</span>
+                  <span className="attachment__error-msg">{u.error}</span>
+                </div>
+              )}
+              <div className="attachment__side">
+                {u.stage === "uploading" && (
+                  <>
+                    <div className="upload-bar">
+                      <span style={{ width: `${u.progress}%` }} />
+                    </div>
+                    <span className="attachment__percent">{u.progress}%</span>
+                  </>
+                )}
+                {u.stage === "registering" && <span className="attachment__percent">saving…</span>}
+                <button
+                  type="button"
+                  className="btn btn--icon"
+                  onClick={() => dismissPending(u.key)}
+                  aria-label="Remove"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          ))}
+        </section>
       )}
 
-      <p style={{ color: "#999", fontSize: 13, marginTop: 48 }}>
-        Files upload directly to storage, so there's no size limit from this
-        server. Long recordings (multi-hour) are supported — the transcript
-        page will show progress until it's done.
-      </p>
+      <section className="stats">
+        <StatTile label="Files" value={String(stats.totalFiles)} />
+        <StatTile label="Transcribed" value={String(stats.completed)} tone="sage" />
+        <StatTile label="In progress" value={String(stats.inProgress)} tone="amber" />
+        <StatTile
+          label="Storage used"
+          value={formatBytes(stats.storageBytes)}
+          sub={stats.audioSeconds ? `${formatHoursMinutes(stats.audioSeconds)} of audio` : undefined}
+        />
+      </section>
+
+      <section className="library">
+        <h2 className="library__heading">Library</h2>
+        {!loaded ? (
+          <p className="library__empty">Loading…</p>
+        ) : jobs.length === 0 ? (
+          <p className="library__empty">Nothing here yet — drop a file above to get started.</p>
+        ) : (
+          <div className="library__list">
+            {jobs.map((job) => (
+              <JobRow key={job.id} job={job} onTranscribe={handleTranscribe} onDelete={handleDelete} />
+            ))}
+          </div>
+        )}
+      </section>
     </main>
   );
 }
