@@ -17,7 +17,7 @@ export type { Job, JobStatus, Folder } from "./types";
 const MANIFEST_PATH = "_manifest/jobs.json";
 const FOLDERS_MANIFEST_PATH = "_manifest/folders.json";
 
-async function readJsonManifest<T>(path: string, key: string): Promise<T[]> {
+export async function readJsonManifest<T>(path: string, key: string): Promise<T[]> {
   const { blobs } = await list({ prefix: path, limit: 1 });
   const entry = blobs.find((b) => b.pathname === path);
   if (!entry) return [];
@@ -42,7 +42,7 @@ async function readJsonManifest<T>(path: string, key: string): Promise<T[]> {
   }
 }
 
-async function writeJsonManifest<T>(path: string, key: string, items: T[]): Promise<void> {
+export async function writeJsonManifest<T>(path: string, key: string, items: T[]): Promise<void> {
   await put(path, JSON.stringify({ [key]: items }), {
     access: "public",
     addRandomSuffix: false,
@@ -97,6 +97,36 @@ async function refreshActiveJobs(jobs: Job[]): Promise<Job[]> {
   for (const { id, patch } of changes) {
     const idx = fresh.findIndex((j) => j.id === id);
     if (idx !== -1) fresh[idx] = { ...fresh[idx], ...patch };
+  }
+  await writeManifest(fresh);
+
+  // A meeting-bot job finishing is the one case nobody's necessarily
+  // watching the library to see — email the transcript the moment it's
+  // done, exactly once (guarded by transcriptEmailedAt so a concurrent
+  // poll from another tab can't double-send).
+  for (const { id, patch } of changes) {
+    if (patch.status !== "completed") continue;
+    const idx = fresh.findIndex((j) => j.id === id);
+    const job = idx !== -1 ? fresh[idx] : undefined;
+    if (!job) continue;
+
+    if (job.meetingId) {
+      try {
+        const { updateMeeting } = await import("./calendar");
+        await updateMeeting(job.meetingId, { status: "completed", jobId: job.id });
+      } catch (err) {
+        console.error("[manifest] failed to mark meeting completed", err);
+      }
+    }
+
+    if (!job.notifyEmail || job.transcriptEmailedAt) continue;
+    try {
+      const { sendTranscriptEmail } = await import("./resend");
+      await sendTranscriptEmail(job);
+      job.transcriptEmailedAt = new Date().toISOString();
+    } catch (err) {
+      console.error("[manifest] failed to email finished transcript", err);
+    }
   }
   await writeManifest(fresh);
   return fresh;

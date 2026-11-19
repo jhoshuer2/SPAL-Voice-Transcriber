@@ -1419,6 +1419,100 @@ a {
   height: 8px;
 }
 
+/* MeetingsMenu reuses .user-menu/.user-menu__dropdown's look but is
+   click-toggled (React state) rather than hover-shown, so it needs its
+   own positioning context and a visible-by-default dropdown. */
+.user-menu:has(.meetings-menu__dropdown) {
+  position: relative;
+}
+
+.meetings-menu__dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  width: 300px;
+  max-width: calc(100vw - 32px);
+}
+
+.meetings-menu__blurb {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  margin: 0 0 4px;
+}
+
+.meetings-menu__connect {
+  justify-content: center;
+}
+
+.meetings-menu__empty {
+  font-size: 13px;
+  color: var(--text-dim);
+  padding: 4px 0;
+}
+
+.meetings-menu__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.meetings-menu__item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.meetings-menu__item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.meetings-menu__item-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.meetings-menu__title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.meetings-menu__when {
+  font-size: 12px;
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+.meetings-menu__item-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.meetings-menu__meta {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.meetings-menu__join {
+  font-size: 12px;
+  padding: 4px 10px;
+}
+
 .user-menu__name {
   font-size: 13.5px;
   font-weight: 600;

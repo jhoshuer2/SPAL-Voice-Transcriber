@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import { cookies } from "next/headers";
 import { migrateOwner } from "@/lib/manifest";
+import { getCalendarAccount, saveCalendarAccount } from "@/lib/calendar";
 
 // No database adapter on purpose, matching the rest of this app's
 // "no database unless we need one" stance — sessions are a signed JWT
@@ -41,10 +42,39 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return true;
     },
-    async jwt({ token, profile }) {
+    async jwt({ token, profile, account }) {
       if (profile?.email) token.email = profile.email;
       if (profile?.name) token.name = profile.name;
       if (profile?.picture) token.picture = profile.picture as string;
+
+      // `account` is only present on the sign-in request itself (not on
+      // later JWT refreshes). When someone's gone through the "Connect
+      // calendar" flow, this is the one moment we see the refresh token
+      // — there's no DB adapter to persist it for us, so stash it in
+      // our own manifest so a cron job can use it independent of this
+      // browser session ever coming back.
+      if (account?.scope?.includes("calendar") && profile?.email) {
+        try {
+          const ownerId = `email:${profile.email}`;
+          // Google only sends a refresh_token on the first consent (or
+          // when we force prompt=consent) — reuse the one we already
+          // have on file rather than overwrite it with nothing.
+          const existing = await getCalendarAccount(ownerId);
+          await saveCalendarAccount({
+            ownerId,
+            email: profile.email,
+            provider: "google",
+            refreshToken: account.refresh_token || existing?.refreshToken || "",
+            accessToken: account.access_token || "",
+            accessTokenExpiresAt: account.expires_at
+              ? new Date(account.expires_at * 1000).toISOString()
+              : new Date(Date.now() + 3600_000).toISOString(),
+            connectedAt: new Date().toISOString(),
+          });
+        } catch (err) {
+          console.error("[auth] failed to save calendar account", err);
+        }
+      }
       return token;
     },
     async session({ session, token }) {

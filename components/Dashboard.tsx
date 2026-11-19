@@ -22,6 +22,7 @@ import type { Folder, Job } from "@/lib/types";
 import { formatBytes, formatHoursMinutes } from "@/lib/format";
 import { signOutAction } from "@/app/actions";
 import { SignInPrompt, type SignInPromptKind } from "@/components/SignInPrompt";
+import { MeetingsMenu } from "@/components/MeetingsMenu";
 
 type LibraryView = "list" | "grid";
 const VIEW_STORAGE_KEY = "spool:library-view";
@@ -385,6 +386,7 @@ export function Dashboard({ user }: { user: DashboardUser }) {
               <span>Install app</span>
             </button>
           )}
+          {user && <MeetingsMenu />}
           <div className="user-menu">
             {user ? (
               <div className="user-menu__trigger">
