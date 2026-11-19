@@ -175,15 +175,24 @@ export function Dashboard({ user }: { user: DashboardUser }) {
         </div>
         <div className="user-menu">
           {user ? (
-            <>
-              {user.image && <img src={user.image} alt="" className="user-menu__avatar" />}
-              {user.email && <span className="user-menu__email">{user.email}</span>}
-              <form action={signOutAction}>
-                <button type="submit" className="btn btn--ghost" title="Sign out">
-                  Sign out
-                </button>
-              </form>
-            </>
+            <div className="user-menu__trigger">
+              {user.image ? (
+                <img src={user.image} alt="" className="user-menu__avatar" />
+              ) : (
+                <span className="user-menu__avatar user-menu__avatar--fallback" aria-hidden>
+                  {(user.name || user.email || "?").charAt(0).toUpperCase()}
+                </span>
+              )}
+              <div className="user-menu__dropdown">
+                {user.name && <span className="user-menu__name">{user.name}</span>}
+                {user.email && <span className="user-menu__email">{user.email}</span>}
+                <form action={signOutAction}>
+                  <button type="submit" className="btn btn--ghost user-menu__signout" title="Sign out">
+                    Sign out
+                  </button>
+                </form>
+              </div>
+            </div>
           ) : (
             <a href="/signin" className="btn btn--ghost">
               Sign in

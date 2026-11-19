@@ -816,24 +816,87 @@ a {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 10px;
+}
+
+.user-menu__trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
 }
 
 .user-menu__avatar {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   object-fit: cover;
   background: var(--indigo-soft);
+  cursor: default;
+}
+
+.user-menu__avatar--fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.user-menu__dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 200px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.08));
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+}
+
+.user-menu__trigger:hover .user-menu__dropdown,
+.user-menu__trigger:focus-within .user-menu__dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* invisible bridge so the dropdown doesn't close when moving the cursor up to it */
+.user-menu__dropdown::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 0;
+  right: 0;
+  height: 8px;
+}
+
+.user-menu__name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
 }
 
 .user-menu__email {
   font-size: 12.5px;
   color: var(--text-dim);
-  max-width: 160px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.user-menu__signout {
+  margin-top: 4px;
+  width: 100%;
+  justify-content: center;
 }
 
 /* ---------------------------------- sign-in toast ---------------------------------- */
@@ -1012,8 +1075,8 @@ a {
     font-size: 14.5px;
   }
 
-  .user-menu__email {
-    display: none;
+  .user-menu__dropdown {
+    min-width: 180px;
   }
 
   .signin-toast {
