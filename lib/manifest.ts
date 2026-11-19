@@ -96,19 +96,20 @@ async function refreshActiveJobs(jobs: Job[]): Promise<Job[]> {
 }
 
 // The manifest is still one shared file, but every job carries an
-// ownerEmail, and every read/write below is scoped to one signed-in
-// Google account. One person's upload is invisible to, and
-// untouchable by, anyone else who signs in.
+// ownerId (lib/owner.ts — an email once signed in, an anonymous
+// cookie id until then), and every read/write below is scoped to it.
+// One visitor's upload is invisible to, and untouchable by, anyone
+// else — signed in or not.
 
-export async function listJobs(ownerEmail: string): Promise<Job[]> {
+export async function listJobs(ownerId: string): Promise<Job[]> {
   const jobs = await refreshActiveJobs(await readManifest());
   return jobs
-    .filter((j) => j.ownerEmail === ownerEmail)
+    .filter((j) => j.ownerId === ownerId)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
-export async function getJob(id: string, ownerEmail: string): Promise<Job | undefined> {
-  const jobs = await listJobs(ownerEmail);
+export async function getJob(id: string, ownerId: string): Promise<Job | undefined> {
+  const jobs = await listJobs(ownerId);
   return jobs.find((j) => j.id === id);
 }
 
@@ -120,20 +121,20 @@ export async function addJob(job: Job): Promise<void> {
 
 export async function updateJob(
   id: string,
-  ownerEmail: string,
+  ownerId: string,
   patch: Partial<Job>,
 ): Promise<Job | undefined> {
   const jobs = await readManifest();
-  const idx = jobs.findIndex((j) => j.id === id && j.ownerEmail === ownerEmail);
+  const idx = jobs.findIndex((j) => j.id === id && j.ownerId === ownerId);
   if (idx === -1) return undefined;
   jobs[idx] = { ...jobs[idx], ...patch };
   await writeManifest(jobs);
   return jobs[idx];
 }
 
-export async function removeJob(id: string, ownerEmail: string): Promise<Job | undefined> {
+export async function removeJob(id: string, ownerId: string): Promise<Job | undefined> {
   const jobs = await readManifest();
-  const idx = jobs.findIndex((j) => j.id === id && j.ownerEmail === ownerEmail);
+  const idx = jobs.findIndex((j) => j.id === id && j.ownerId === ownerId);
   if (idx === -1) return undefined;
   const [removed] = jobs.splice(idx, 1);
   await writeManifest(jobs);
@@ -143,4 +144,20 @@ export async function removeJob(id: string, ownerEmail: string): Promise<Job | u
     // best effort — don't fail the delete if the blob is already gone
   }
   return removed;
+}
+
+// Called right after a successful Google sign-in (see auth.ts) so an
+// anonymous visitor's existing library carries over to their account
+// instead of becoming invisible the moment they sign in.
+export async function migrateOwner(fromOwnerId: string, toOwnerId: string): Promise<void> {
+  if (fromOwnerId === toOwnerId) return;
+  const jobs = await readManifest();
+  let changed = false;
+  for (const j of jobs) {
+    if (j.ownerId === fromOwnerId) {
+      j.ownerId = toOwnerId;
+      changed = true;
+    }
+  }
+  if (changed) await writeManifest(jobs);
 }

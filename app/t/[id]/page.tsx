@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import type { Job } from "@/lib/types";
 import { formatDuration } from "@/lib/format";
+import { SignInPrompt } from "@/components/SignInPrompt";
 
 type Utterance = { speaker: string; text: string; start: number; end: number };
 type TranscriptData = { text?: string; utterances?: Utterance[] };
@@ -25,6 +26,15 @@ export default function TranscriptPage() {
   const [err, setErr] = useState("");
   const [copied, setCopied] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [showSignInPrompt, setShowSignInPrompt] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/me")
+      .then((res) => res.json())
+      .then((data) => setSignedIn(Boolean(data.signedIn)))
+      .catch(() => setSignedIn(false));
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -89,6 +99,7 @@ export default function TranscriptPage() {
     a.download = `${job?.filename?.replace(/\.[^/.]+$/, "") || "transcript"}.txt`;
     a.click();
     URL.revokeObjectURL(url);
+    if (signedIn === false) setShowSignInPrompt(true);
   }
 
   function copyLink() {
@@ -164,6 +175,10 @@ export default function TranscriptPage() {
             )}
           </div>
         </>
+      )}
+
+      {showSignInPrompt && (
+        <SignInPrompt kind="download" onDismiss={() => setShowSignInPrompt(false)} />
       )}
     </main>
   );

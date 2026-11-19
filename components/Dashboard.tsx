@@ -9,6 +9,7 @@ import { ReelIcon, StackIcon, CheckIcon, PulseIcon, DiscIcon } from "@/component
 import type { Job } from "@/lib/types";
 import { formatBytes, formatHoursMinutes } from "@/lib/format";
 import { signOutAction } from "@/app/actions";
+import { SignInPrompt, type SignInPromptKind } from "@/components/SignInPrompt";
 
 function greeting() {
   const h = new Date().getHours();
@@ -21,7 +22,10 @@ type DashboardUser = {
   name?: string | null;
   email?: string | null;
   image?: string | null;
-};
+} | null;
+
+const IDLE_PROMPT_MS = 25_000;
+const IDLE_PROMPT_DISMISS_KEY = "spool:idle-prompt-dismissed";
 
 type PendingUpload = {
   key: string;
@@ -40,13 +44,28 @@ function nextKey() {
 }
 
 export function Dashboard({ user }: { user: DashboardUser }) {
-  const firstName = (user.name || user.email || "there").split(" ")[0].split("@")[0];
+  const firstName = user ? (user.name || user.email || "there").split(" ")[0].split("@")[0] : null;
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [pending, setPending] = useState<PendingUpload[]>([]);
   const [dragging, setDragging] = useState(false);
+  const [signInPrompt, setSignInPrompt] = useState<SignInPromptKind | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dragDepth = useRef(0);
+
+  // Sign-in is optional. If nobody's signed in, nudge — once, gently —
+  // after a quiet moment, rather than gating anything up front.
+  useEffect(() => {
+    if (user) return;
+    if (typeof window !== "undefined" && sessionStorage.getItem(IDLE_PROMPT_DISMISS_KEY)) return;
+    const t = setTimeout(() => setSignInPrompt("idle"), IDLE_PROMPT_MS);
+    return () => clearTimeout(t);
+  }, [user]);
+
+  function dismissSignInPrompt() {
+    setSignInPrompt(null);
+    if (typeof window !== "undefined") sessionStorage.setItem(IDLE_PROMPT_DISMISS_KEY, "1");
+  }
 
   const refreshJobs = useCallback(async () => {
     try {
@@ -149,19 +168,27 @@ export function Dashboard({ user }: { user: DashboardUser }) {
           <ReelIcon />
         </span>
         <div>
-          <h1 className="brand__title">{greeting()}, {firstName}</h1>
+          <h1 className="brand__title">{greeting()}{firstName ? `, ${firstName}` : ""}</h1>
           <p className="brand__tagline">
             Here's your library — drop in audio of <em>any</em> length, transcribe it whenever you're ready.
           </p>
         </div>
         <div className="user-menu">
-          {user.image && <img src={user.image} alt="" className="user-menu__avatar" />}
-          {user.email && <span className="user-menu__email">{user.email}</span>}
-          <form action={signOutAction}>
-            <button type="submit" className="btn btn--ghost" title="Sign out">
-              Sign out
-            </button>
-          </form>
+          {user ? (
+            <>
+              {user.image && <img src={user.image} alt="" className="user-menu__avatar" />}
+              {user.email && <span className="user-menu__email">{user.email}</span>}
+              <form action={signOutAction}>
+                <button type="submit" className="btn btn--ghost" title="Sign out">
+                  Sign out
+                </button>
+              </form>
+            </>
+          ) : (
+            <a href="/signin" className="btn btn--ghost">
+              Sign in
+            </a>
+          )}
         </div>
       </header>
 
@@ -268,6 +295,10 @@ export function Dashboard({ user }: { user: DashboardUser }) {
           </div>
         )}
       </section>
+
+      {signInPrompt && !user && (
+        <SignInPrompt kind={signInPrompt} onDismiss={dismissSignInPrompt} />
+      )}
     </main>
   );
 }

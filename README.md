@@ -31,13 +31,17 @@ or share. Built to deploy on Vercel.
   cache-busted URL — without that, Blob's CDN caching the same URL for up
   to a year means a read right after a write can come back stale (this
   previously caused jobs to silently vanish from the library).
-- **Auth:** Google sign-in via [Auth.js](https://authjs.dev) (`auth.ts`,
-  `middleware.ts`). Sessions are a signed JWT cookie — no session table.
-  Every `Job` carries an `ownerEmail`, and every manifest read/write in the
-  API routes is scoped to `auth()`'s current session, so signed-in users
-  each see only their own library even though the manifest file itself is
-  shared. `middleware.ts` gates every route except `/signin` and the
-  `/api/auth/*` OAuth callback.
+- **Sign-in is optional, never a gate.** The dashboard works immediately
+  for anyone — upload, transcribe, download — no login screen in the way.
+  Behind the scenes every visitor still gets a private library: before
+  signing in, an anonymous cookie id scopes their jobs (`lib/owner.ts`);
+  after signing in with Google via [Auth.js](https://authjs.dev) (`auth.ts`),
+  their email does instead, and `lib/manifest.ts#migrateOwner` folds any
+  existing anonymous history into the new account so nothing's lost. The
+  nudge to sign in is a dismissible toast (`components/SignInPrompt.tsx`),
+  shown once after a quiet moment on the dashboard and again right after
+  downloading a transcript — never a hard requirement. "Sign in" in the
+  header is the always-available opt-in.
 
 ## Deploy it
 
@@ -95,12 +99,14 @@ Note: Blob client uploads need a real token, so local dev without
 ## What's deliberately left for later
 
 - **Transcript share-link pages (`/t/:id`) aren't access-controlled** —
-  the dashboard and all API routes are gated behind sign-in, but a
-  transcript's own page checks ownership via the API calls it makes
-  under the hood, not a public/private flag. Anyone you hand a specific
-  link to can still open it. Good enough for "share with a specific
-  person"; add an explicit visibility flag on `Job` if that's ever a
-  problem.
+  every job is owned by a cookie id or an email, but anyone holding that
+  specific link can still open it (ownership gates the dashboard listing
+  and mutations, not the share link itself). Good enough for "share with
+  a specific person"; add an explicit visibility flag on `Job` if that's
+  ever a problem.
+- **Anonymous history lives in a cookie** — clear browser data (or open
+  the library in another browser) and that history is gone unless you'd
+  signed in first. That's the whole point of the sign-in nudge, not a bug.
 - **One Google account per browser session** — there's no invite system
   or shared-library concept; every signed-in Google account gets a
   separate, private set of jobs in the same underlying manifest file.

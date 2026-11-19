@@ -1,10 +1,7 @@
-import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { Dashboard } from "@/components/Dashboard";
 
 export default async function Home() {
   const session = await auth();
-  if (!session?.user) redirect("/signin");
-
-  return <Dashboard user={session.user} />;
+  return <Dashboard user={session?.user ?? null} />;
 }
