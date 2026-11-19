@@ -48,12 +48,31 @@ body {
 }
 
 body {
+  position: relative;
   font-family: var(--font-sans);
   font-feature-settings: "tnum" 1, "cv11" 1;
   color: var(--text);
   background: var(--bg);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+}
+
+/* The color-mesh lives here now, not on .hero — a page-wide wash that
+   sits behind the topbar + hero and fades (via mask-image) into the
+   flat --bg beneath it, rather than reading as a distinct card. */
+body::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 620px;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(560px 360px at 12% 0%, var(--indigo-soft) 0%, transparent 60%),
+    radial-gradient(520px 340px at 92% 4%, var(--green-soft) 0%, transparent 65%),
+    radial-gradient(640px 400px at 45% 30%, var(--indigo-dot) 0%, transparent 70%);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 35%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 0%, black 35%, transparent 100%);
 }
 
 button,
@@ -175,20 +194,9 @@ a {
 
 .hero {
   position: relative;
-  padding: 28px 24px 32px;
-  margin-bottom: 4px;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  /* A soft color-mesh instead of a flat panel — a few large, blurred
-     radial blooms in the brand's own indigo/green rather than a stock
-     photo, so it reads as "designed" without adding real weight or a
-     licensing question. Kept pastel so dark ink text stays legible
-     with no scrim needed, unlike a photographic hero would. */
-  background:
-    radial-gradient(520px 320px at 8% -10%, var(--indigo-soft) 0%, transparent 60%),
-    radial-gradient(480px 300px at 100% 0%, var(--green-soft) 0%, transparent 65%),
-    radial-gradient(600px 360px at 50% 120%, var(--indigo-dot) 0%, transparent 70%),
-    var(--card);
+  /* No background of its own — it sits on the page-wide mesh painted
+     by body::before, so it reads as a wash rather than a card. */
+  padding: 8px 0 20px;
 }
 
 .hero__mark {
