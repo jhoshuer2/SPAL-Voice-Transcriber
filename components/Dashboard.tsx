@@ -228,9 +228,13 @@ export function Dashboard({ user }: { user: DashboardUser }) {
         }),
       });
       if (!res.ok) throw new Error((await res.json()).error || "Could not register upload");
+      const { job } = await res.json();
 
       setPending((p) => p.filter((u) => u.key !== key));
-      refreshJobs();
+      // The POST response already *is* the authoritative row — add it
+      // straight to state instead of re-fetching the whole list, which
+      // can briefly race the manifest write and come back without it.
+      setJobs((prev) => [job, ...prev]);
     } catch (err) {
       setPending((p) =>
         p.map((u) =>
@@ -252,14 +256,29 @@ export function Dashboard({ user }: { user: DashboardUser }) {
   }
 
   async function handleTranscribe(id: string) {
-    await fetch(`/api/jobs/${id}/transcribe`, { method: "POST" });
-    refreshJobs();
+    // Flip to "queued" the moment the request is accepted, from the
+    // response body itself — not from a follow-up GET, which can race
+    // the manifest write and still show "uploaded" for a beat. That
+    // stale read was exactly why the button seemed to need a second
+    // click and why there was no immediate "it's working" feedback.
+    const res = await fetch(`/api/jobs/${id}/transcribe`, { method: "POST" });
+    const data = await res.json().catch(() => null);
+    if (res.ok && data?.job) {
+      setJobs((prev) => prev.map((job) => (job.id === id ? data.job : job)));
+    } else if (!res.ok) {
+      setJobs((prev) =>
+        prev.map((job) =>
+          job.id === id ? { ...job, status: "error", error: data?.error || "Failed to start" } : job,
+        ),
+      );
+    }
+    // No trailing refreshJobs() here — hasActive now flips to true from
+    // the optimistic update above, which starts the 5s poll on its own.
   }
 
   async function handleDelete(id: string) {
     setJobs((j) => j.filter((job) => job.id !== id));
     await fetch(`/api/jobs/${id}`, { method: "DELETE" });
-    refreshJobs();
   }
 
   async function handleMove(id: string, folderId: string | null) {
@@ -269,7 +288,6 @@ export function Dashboard({ user }: { user: DashboardUser }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ folderId }),
     });
-    refreshJobs();
   }
 
   async function handleTrySample() {
@@ -291,8 +309,9 @@ export function Dashboard({ user }: { user: DashboardUser }) {
       });
       if (!res.ok) throw new Error("Could not add the sample");
       const { job } = await res.json();
-      await fetch(`/api/jobs/${job.id}/transcribe`, { method: "POST" });
-      refreshJobs();
+      const transcribeRes = await fetch(`/api/jobs/${job.id}/transcribe`, { method: "POST" });
+      const transcribeData = await transcribeRes.json().catch(() => null);
+      setJobs((prev) => [transcribeData?.job ?? job, ...prev]);
     } catch {
       // Best effort — if this fails the library just won't show a new
       // row, which is self-evident, so there's nothing useful to surface.
@@ -312,7 +331,10 @@ export function Dashboard({ user }: { user: DashboardUser }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name }),
     });
-    if (res.ok) refreshFolders();
+    if (res.ok) {
+      const { folder } = await res.json();
+      setFolders((prev) => [...prev, folder].sort((a, b) => a.name.localeCompare(b.name)));
+    }
   }
 
   async function handleRenameFolder(id: string, name: string) {
@@ -322,15 +344,15 @@ export function Dashboard({ user }: { user: DashboardUser }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name }),
     });
-    refreshFolders();
   }
 
   async function handleDeleteFolder(id: string) {
     setFolders((f) => f.filter((folder) => folder.id !== id));
+    // Deleting a folder never deletes its files — the server falls them
+    // back to the root library, so mirror that locally right away.
+    setJobs((j) => j.map((job) => (job.folderId === id ? { ...job, folderId: null } : job)));
     if (currentFolderId === id) setCurrentFolderId(null);
     await fetch(`/api/folders/${id}`, { method: "DELETE" });
-    refreshFolders();
-    refreshJobs();
   }
 
   const currentFolder = currentFolderId ? folders.find((f) => f.id === currentFolderId) : null;
