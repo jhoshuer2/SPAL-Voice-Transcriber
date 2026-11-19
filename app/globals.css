@@ -545,6 +545,282 @@ a {
   flex: none;
 }
 
+.job-row__icon--folder {
+  background: var(--indigo-soft);
+  color: var(--indigo);
+}
+
+/* move-to-folder select, tucked in among the row's other actions */
+.move-select {
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--text-dim);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 7px 10px;
+  max-width: 140px;
+  cursor: pointer;
+}
+
+.move-select:hover {
+  border-color: var(--border-strong);
+}
+
+/* ---------------------------------- library toolbar ---------------------------------- */
+
+.library__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.library__crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: none;
+  border: none;
+  padding: 2px 0;
+  cursor: pointer;
+}
+
+.library__crumb:hover {
+  color: var(--text);
+}
+
+.library__crumb svg {
+  width: 15px;
+  height: 15px;
+}
+
+.library__crumb-sep {
+  color: var(--text-faint);
+  font-weight: 400;
+}
+
+.library__crumb-current {
+  color: var(--text);
+}
+
+.library__toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.library__toolbar-actions .btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.new-folder-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.new-folder-form__input {
+  font-family: inherit;
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--card);
+  color: var(--text);
+  min-width: 160px;
+}
+
+.new-folder-form__input:focus {
+  outline: 2px solid var(--indigo-soft);
+  outline-offset: 1px;
+}
+
+.view-toggle {
+  display: flex;
+  align-items: center;
+  background: #f2f2f6;
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.view-toggle__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.view-toggle__btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.view-toggle__btn:hover {
+  color: var(--text-dim);
+}
+
+.view-toggle__btn--active {
+  background: var(--card);
+  color: var(--indigo);
+  box-shadow: var(--shadow-card);
+}
+
+/* ---------------------------------- library grid (folders + file tiles) ---------------------------------- */
+
+.library__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 14px;
+}
+
+.tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 12px 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  text-align: center;
+}
+
+.tile:hover {
+  box-shadow: var(--shadow-card-hover);
+  border-color: var(--border-strong);
+}
+
+.job-tile {
+  cursor: default;
+}
+
+.tile__thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f2f2f6;
+  color: var(--text-dim);
+}
+
+.tile__thumb svg {
+  width: 22px;
+  height: 22px;
+}
+
+.tile__thumb--folder {
+  background: var(--indigo-soft);
+  color: var(--indigo);
+}
+
+.job-tile--completed .tile__thumb {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.job-tile--queued .tile__thumb,
+.job-tile--processing .tile__thumb {
+  background: var(--indigo-soft);
+  color: var(--indigo);
+}
+
+.job-tile--error .tile__thumb {
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.tile__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+  min-width: 0;
+}
+
+.tile__name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.tile__meta {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.tile__status {
+  margin-top: 2px;
+}
+
+.tile__status .rec-label,
+.tile__status .status-label,
+.tile__status .job-row__error {
+  font-size: 11px;
+}
+
+.tile__actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.tile__actions .btn {
+  font-size: 11.5px;
+  padding: 6px 11px;
+}
+
+.tile__actions .move-select {
+  max-width: 120px;
+  font-size: 11px;
+  padding: 6px 8px;
+}
+
+.folder-item__input {
+  font-family: inherit;
+  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  background: var(--card);
+  color: var(--text);
+  width: 100%;
+  max-width: 160px;
+}
+
+.folder-item--grid .folder-item__input {
+  text-align: center;
+}
+
 /* status pill */
 
 .status-label {
@@ -969,6 +1245,33 @@ a {
 @media (max-width: 640px) {
   .shell {
     padding: 28px 16px 72px;
+  }
+
+  .library__toolbar {
+    align-items: flex-start;
+  }
+
+  .library__toolbar-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .new-folder-form {
+    flex: 1;
+  }
+
+  .new-folder-form__input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .library__grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+  }
+
+  .move-select {
+    max-width: 100px;
   }
 
   .brand {

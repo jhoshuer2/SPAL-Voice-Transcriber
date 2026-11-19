@@ -58,6 +58,64 @@ export function DiscIcon() {
   );
 }
 
+export function FolderIcon() {
+  return (
+    <svg viewBox="0 0 24 24" {...common}>
+      <path d="M4 7.5A1.5 1.5 0 0 1 5.5 6h4.1a1.5 1.5 0 0 1 1.2.6l1.2 1.65a1.5 1.5 0 0 0 1.2.6h5.3A1.5 1.5 0 0 1 20 10.35v8.15A1.5 1.5 0 0 1 18.5 20h-13A1.5 1.5 0 0 1 4 18.5v-11Z" />
+    </svg>
+  );
+}
+
+export function VideoIcon() {
+  return (
+    <svg viewBox="0 0 24 24" {...common}>
+      <rect x="3" y="6.5" width="13" height="11" rx="2.5" />
+      <path d="M16 10.3 21 7.5v9L16 13.7" />
+    </svg>
+  );
+}
+
+export function ListViewIcon() {
+  return (
+    <svg viewBox="0 0 24 24" {...common}>
+      <path d="M9 6.5h11" />
+      <path d="M9 12h11" />
+      <path d="M9 17.5h11" />
+      <path d="M4.5 6.5h.01" />
+      <path d="M4.5 12h.01" />
+      <path d="M4.5 17.5h.01" />
+    </svg>
+  );
+}
+
+export function GridViewIcon() {
+  return (
+    <svg viewBox="0 0 24 24" {...common}>
+      <rect x="4" y="4" width="7" height="7" rx="1.6" />
+      <rect x="13" y="4" width="7" height="7" rx="1.6" />
+      <rect x="4" y="13" width="7" height="7" rx="1.6" />
+      <rect x="13" y="13" width="7" height="7" rx="1.6" />
+    </svg>
+  );
+}
+
+export function PlusIcon() {
+  return (
+    <svg viewBox="0 0 24 24" {...common}>
+      <path d="M12 5v14" />
+      <path d="M5 12h14" />
+    </svg>
+  );
+}
+
+export function ChevronLeftIcon() {
+  return (
+    <svg viewBox="0 0 24 24" {...common}>
+      <path d="M14.5 5 8 12l6.5 7" />
+    </svg>
+  );
+}
+
 export function ReelIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none">

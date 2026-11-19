@@ -22,4 +22,15 @@ export type Job = {
   durationSeconds?: number;
   completedAt?: string;
   error?: string;
+  /** Which folder this file's been filed into. null/absent = the root library. */
+  folderId?: string | null;
+};
+
+/** A user-created grouping for files in the library. Folders are flat — no nesting. */
+export type Folder = {
+  id: string;
+  /** Same ownerId scoping as Job — see lib/owner.ts. */
+  ownerId: string;
+  name: string;
+  createdAt: string; // ISO timestamp
 };

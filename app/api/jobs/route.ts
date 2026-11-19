@@ -27,6 +27,7 @@ export async function POST(request: Request) {
     filename?: string;
     size?: number;
     contentType?: string | null;
+    folderId?: string | null;
   };
 
   if (!body.url || !body.pathname) {
@@ -43,6 +44,7 @@ export async function POST(request: Request) {
     contentType: body.contentType ?? null,
     createdAt: new Date().toISOString(),
     status: "uploaded",
+    folderId: body.folderId ?? null,
   };
 
   await addJob(job);

@@ -1,23 +1,25 @@
+import { randomUUID } from "crypto";
 import { put, list, del } from "@vercel/blob";
-import type { Job } from "./types";
+import type { Job, Folder } from "./types";
 import { fetchTranscript } from "./assemblyai";
 
-export type { Job, JobStatus } from "./types";
+export type { Job, JobStatus, Folder } from "./types";
 
 // There's no database here on purpose — this app stays a single Blob
-// store. The "manifest" is one small JSON file (_manifest/jobs.json)
-// living alongside the audio files, read-modified-written on every
-// change. That's a real tradeoff: concurrent writes can race and the
-// last write wins. For a personal/low-traffic tool that's a fine
-// price for not standing up Postgres/KV. If this ever gets heavier
-// concurrent use, swap this file's internals for a real datastore —
-// nothing outside lib/manifest.ts needs to change.
+// store. Each "manifest" is one small JSON file living alongside the
+// audio files, read-modified-written on every change. That's a real
+// tradeoff: concurrent writes can race and the last write wins. For a
+// personal/low-traffic tool that's a fine price for not standing up
+// Postgres/KV. If this ever gets heavier concurrent use, swap this
+// file's internals for a real datastore — nothing outside
+// lib/manifest.ts needs to change.
 
 const MANIFEST_PATH = "_manifest/jobs.json";
+const FOLDERS_MANIFEST_PATH = "_manifest/folders.json";
 
-async function readManifest(): Promise<Job[]> {
-  const { blobs } = await list({ prefix: MANIFEST_PATH, limit: 1 });
-  const entry = blobs.find((b) => b.pathname === MANIFEST_PATH);
+async function readJsonManifest<T>(path: string, key: string): Promise<T[]> {
+  const { blobs } = await list({ prefix: path, limit: 1 });
+  const entry = blobs.find((b) => b.pathname === path);
   if (!entry) return [];
   try {
     // Bust both our own fetch cache and the Blob CDN's edge cache. The
@@ -29,19 +31,19 @@ async function readManifest(): Promise<Job[]> {
     const bustedUrl = `${entry.url}${entry.url.includes("?") ? "&" : "?"}t=${Date.now()}`;
     const res = await fetch(bustedUrl, { cache: "no-store" });
     if (!res.ok) {
-      console.error(`[manifest] read failed with status ${res.status}; treating as empty`);
+      console.error(`[manifest] read failed for ${path} with status ${res.status}; treating as empty`);
       return [];
     }
     const data = await res.json();
-    return Array.isArray(data?.jobs) ? (data.jobs as Job[]) : [];
+    return Array.isArray(data?.[key]) ? (data[key] as T[]) : [];
   } catch (err) {
-    console.error("[manifest] read threw; treating as empty", err);
+    console.error(`[manifest] read threw for ${path}; treating as empty`, err);
     return [];
   }
 }
 
-async function writeManifest(jobs: Job[]): Promise<void> {
-  await put(MANIFEST_PATH, JSON.stringify({ jobs }), {
+async function writeJsonManifest<T>(path: string, key: string, items: T[]): Promise<void> {
+  await put(path, JSON.stringify({ [key]: items }), {
     access: "public",
     addRandomSuffix: false,
     allowOverwrite: true,
@@ -53,6 +55,11 @@ async function writeManifest(jobs: Job[]): Promise<void> {
     cacheControlMaxAge: 0,
   });
 }
+
+const readManifest = () => readJsonManifest<Job>(MANIFEST_PATH, "jobs");
+const writeManifest = (jobs: Job[]) => writeJsonManifest(MANIFEST_PATH, "jobs", jobs);
+const readFolders = () => readJsonManifest<Folder>(FOLDERS_MANIFEST_PATH, "folders");
+const writeFolders = (folders: Folder[]) => writeJsonManifest(FOLDERS_MANIFEST_PATH, "folders", folders);
 
 /** Check AssemblyAI for any job still mid-flight and fold changes back in. */
 async function refreshActiveJobs(jobs: Job[]): Promise<Job[]> {
@@ -146,18 +153,91 @@ export async function removeJob(id: string, ownerId: string): Promise<Job | unde
   return removed;
 }
 
-// Called right after a successful Google sign-in (see auth.ts) so an
-// anonymous visitor's existing library carries over to their account
-// instead of becoming invisible the moment they sign in.
-export async function migrateOwner(fromOwnerId: string, toOwnerId: string): Promise<void> {
-  if (fromOwnerId === toOwnerId) return;
+// ---------------------------------------------------------------------------
+// Folders — a flat (no nesting) way to group files in the library. Same
+// ownerId scoping as jobs, stored in their own small manifest file so
+// folder housekeeping never touches the (hotter-written) jobs file.
+
+export async function listFolders(ownerId: string): Promise<Folder[]> {
+  const folders = await readFolders();
+  return folders
+    .filter((f) => f.ownerId === ownerId)
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export async function createFolder(ownerId: string, name: string): Promise<Folder> {
+  const folders = await readFolders();
+  const folder: Folder = {
+    id: randomUUID(),
+    ownerId,
+    name: name.trim().slice(0, 80) || "Untitled folder",
+    createdAt: new Date().toISOString(),
+  };
+  folders.push(folder);
+  await writeFolders(folders);
+  return folder;
+}
+
+export async function renameFolder(
+  id: string,
+  ownerId: string,
+  name: string,
+): Promise<Folder | undefined> {
+  const folders = await readFolders();
+  const idx = folders.findIndex((f) => f.id === id && f.ownerId === ownerId);
+  if (idx === -1) return undefined;
+  const trimmed = name.trim().slice(0, 80);
+  folders[idx] = { ...folders[idx], name: trimmed || folders[idx].name };
+  await writeFolders(folders);
+  return folders[idx];
+}
+
+// Deleting a folder never deletes the files inside it — they fall back
+// to the root library (folderId cleared) rather than disappearing.
+export async function removeFolder(id: string, ownerId: string): Promise<Folder | undefined> {
+  const folders = await readFolders();
+  const idx = folders.findIndex((f) => f.id === id && f.ownerId === ownerId);
+  if (idx === -1) return undefined;
+  const [removed] = folders.splice(idx, 1);
+  await writeFolders(folders);
+
   const jobs = await readManifest();
   let changed = false;
   for (const j of jobs) {
-    if (j.ownerId === fromOwnerId) {
-      j.ownerId = toOwnerId;
+    if (j.ownerId === ownerId && j.folderId === id) {
+      j.folderId = null;
       changed = true;
     }
   }
   if (changed) await writeManifest(jobs);
+
+  return removed;
+}
+
+// Called right after a successful Google sign-in (see auth.ts) so an
+// anonymous visitor's existing library — files and folders both —
+// carries over to their account instead of becoming invisible the
+// moment they sign in.
+export async function migrateOwner(fromOwnerId: string, toOwnerId: string): Promise<void> {
+  if (fromOwnerId === toOwnerId) return;
+
+  const jobs = await readManifest();
+  let changedJobs = false;
+  for (const j of jobs) {
+    if (j.ownerId === fromOwnerId) {
+      j.ownerId = toOwnerId;
+      changedJobs = true;
+    }
+  }
+  if (changedJobs) await writeManifest(jobs);
+
+  const folders = await readFolders();
+  let changedFolders = false;
+  for (const f of folders) {
+    if (f.ownerId === fromOwnerId) {
+      f.ownerId = toOwnerId;
+      changedFolders = true;
+    }
+  }
+  if (changedFolders) await writeFolders(folders);
 }
