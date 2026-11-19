@@ -273,10 +273,6 @@ a {
   line-height: 1.4;
 }
 
-.action-card--upload {
-  grid-area: upload;
-}
-
 .action-card--sample {
   grid-area: sample;
 }
@@ -314,6 +310,158 @@ a {
   flex: none;
 }
 
+/* ---------------------------------- dropzone (upload box) ---------------------------------- */
+
+.dropzone {
+  grid-area: upload;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  padding: 26px 20px 24px;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: 10px;
+  background: var(--card);
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.dropzone:hover {
+  border-color: var(--text-dim);
+}
+
+.dropzone--dragging {
+  border-color: var(--indigo);
+  background: var(--indigo-soft);
+}
+
+.dropzone__illustration {
+  position: relative;
+  height: 50px;
+  width: 132px;
+  margin-bottom: 6px;
+}
+
+.format-chip {
+  position: absolute;
+  top: 2px;
+  transition: transform 0.15s ease;
+}
+
+.format-chip--center {
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+
+.format-chip--behind {
+  z-index: 1;
+  opacity: 0.8;
+}
+
+.format-chip--left {
+  left: 10%;
+  transform: rotate(-11deg);
+}
+
+.format-chip--right {
+  right: 10%;
+  transform: rotate(11deg);
+}
+
+.dropzone--dragging .format-chip--center {
+  transform: translateX(-50%) translateY(-2px);
+}
+
+.dropzone--dragging .format-chip--left {
+  transform: rotate(-15deg) translateY(-3px);
+}
+
+.dropzone--dragging .format-chip--right {
+  transform: rotate(15deg) translateY(-3px);
+}
+
+.dropzone__title {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.dropzone__sub {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* ---------------------------------- format badge (file-type thumbnail) ---------------------------------- */
+
+.format-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  background: var(--bg);
+  color: var(--text-dim);
+  border: 1px solid var(--border-strong);
+  flex: none;
+}
+
+.format-badge--sm {
+  width: 30px;
+  height: 30px;
+  font-size: 8px;
+  border-radius: 6px;
+}
+
+.format-badge--md {
+  width: 38px;
+  height: 38px;
+  font-size: 9px;
+}
+
+.format-badge--lg {
+  width: 44px;
+  height: 44px;
+  font-size: 10px;
+  border-radius: 9px;
+}
+
+.format-badge--mp3 {
+  background: var(--indigo-soft);
+  color: var(--indigo);
+  border-color: var(--indigo-soft);
+}
+
+.format-badge--wav {
+  background: var(--green-soft);
+  color: var(--green);
+  border-color: var(--green-soft);
+}
+
+.format-badge--m4a {
+  background: #fdf1e3;
+  color: #b4690e;
+  border-color: #fdf1e3;
+}
+
+.format-badge--video {
+  background: #f2f2f6;
+  color: var(--text-dim);
+  border-color: #f2f2f6;
+}
+
+/* The illustration chips sit on a white card regardless of tone, like a
+   photo thumbnail with a white frame — only the label keeps its color. */
+.format-badge--lg {
+  background: #fff;
+  box-shadow: var(--shadow-card);
+}
+
 /* ---------------------------------- pending attachments ---------------------------------- */
 
 .attachments {
@@ -325,12 +473,12 @@ a {
 
 .attachment {
   display: flex;
-  align-items: center;
-  gap: 16px;
+  align-items: flex-start;
+  gap: 12px;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 12px 16px;
+  padding: 12px 14px;
   box-shadow: var(--shadow-card);
 }
 
@@ -338,18 +486,54 @@ a {
   border-color: rgba(229, 72, 77, 0.3);
 }
 
-.attachment__error-body {
+.attachment__body {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 5px;
   flex: 1;
   min-width: 0;
 }
 
+.attachment__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .attachment__name {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachment__close {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 11px;
+  color: var(--text-faint);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.attachment__close:hover {
+  color: var(--text-dim);
+  background: var(--bg);
+}
+
+.attachment__status {
+  font-size: 12px;
+  color: var(--text-dim);
 }
 
 .attachment__error-msg {
@@ -357,23 +541,8 @@ a {
   color: var(--red);
 }
 
-.attachment__side {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: none;
-}
-
-.attachment__percent {
-  font-size: 12px;
-  color: var(--text-dim);
-  min-width: 46px;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
 .upload-bar {
-  width: 86px;
+  width: 100%;
   height: 5px;
   border-radius: 3px;
   background: var(--indigo-soft);
@@ -1410,8 +1579,8 @@ a {
     padding: 15px 16px;
   }
 
-  .action-card--upload {
-    padding: 18px 18px;
+  .dropzone {
+    padding: 20px 16px;
   }
 
   .topbar__right {
@@ -1429,35 +1598,6 @@ a {
 
   .stat-pill {
     padding: 6px 12px 6px 6px;
-  }
-
-  /* Pending-upload card: waveform controls on their own row, transfer
-     progress on the next — the fixed-width upload bar doesn't need to
-     compete with the waveform for space on a narrow screen. */
-  .attachment {
-    flex-wrap: wrap;
-    gap: 10px;
-    padding: 12px 14px;
-  }
-
-  .attachment__side {
-    flex: 1 1 100%;
-    justify-content: space-between;
-    padding-left: 44px;
-  }
-
-  .upload-bar {
-    flex: 1;
-    width: auto;
-    max-width: 220px;
-  }
-
-  .waveform-bars {
-    height: 26px;
-  }
-
-  .waveform-duration {
-    display: none;
   }
 
   .job-row {

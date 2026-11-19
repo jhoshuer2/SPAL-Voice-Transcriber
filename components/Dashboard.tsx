@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
-import { Waveform } from "@/components/Waveform";
 import { StatTile } from "@/components/StatTile";
 import { JobRow } from "@/components/JobRow";
 import { FolderItem } from "@/components/FolderItem";
+import { FormatBadge } from "@/components/FormatBadge";
 import {
   ReelIcon,
   StackIcon,
@@ -16,7 +16,6 @@ import {
   GridViewIcon,
   ChevronLeftIcon,
   FolderIcon,
-  UploadIcon,
   DownloadIcon,
 } from "@/components/icons";
 import type { Folder, Job } from "@/lib/types";
@@ -407,26 +406,7 @@ export function Dashboard({ user }: { user: DashboardUser }) {
 
       <p className="section-eyebrow section-eyebrow--actions">Start here</p>
 
-      <section
-        className="hero-actions"
-        onDragEnter={(e) => {
-          e.preventDefault();
-          dragDepth.current += 1;
-          setDragging(true);
-        }}
-        onDragOver={(e) => e.preventDefault()}
-        onDragLeave={(e) => {
-          e.preventDefault();
-          dragDepth.current -= 1;
-          if (dragDepth.current <= 0) setDragging(false);
-        }}
-        onDrop={(e) => {
-          e.preventDefault();
-          dragDepth.current = 0;
-          setDragging(false);
-          if (e.dataTransfer.files?.length) handleFiles(e.dataTransfer.files);
-        }}
-      >
+      <section className="hero-actions">
         <input
           ref={inputRef}
           type="file"
@@ -441,16 +421,39 @@ export function Dashboard({ user }: { user: DashboardUser }) {
 
         <button
           type="button"
-          className={`action-card action-card--upload ${dragging ? "action-card--dragging" : ""}`}
+          className={`dropzone ${dragging ? "dropzone--dragging" : ""}`}
           onClick={() => inputRef.current?.click()}
+          onDragEnter={(e) => {
+            e.preventDefault();
+            dragDepth.current += 1;
+            setDragging(true);
+          }}
+          onDragOver={(e) => e.preventDefault()}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            dragDepth.current -= 1;
+            if (dragDepth.current <= 0) setDragging(false);
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            dragDepth.current = 0;
+            setDragging(false);
+            if (e.dataTransfer.files?.length) handleFiles(e.dataTransfer.files);
+          }}
         >
-          <span className="action-card__icon" aria-hidden>
-            <UploadIcon />
+          <span className="dropzone__illustration" aria-hidden>
+            <span className="format-chip format-chip--behind format-chip--left">
+              <FormatBadge filename="voice.m4a" size="lg" />
+            </span>
+            <span className="format-chip format-chip--center">
+              <FormatBadge filename="track.mp3" size="lg" />
+            </span>
+            <span className="format-chip format-chip--behind format-chip--right">
+              <FormatBadge filename="clip.wav" size="lg" />
+            </span>
           </span>
-          <span className="action-card__body">
-            <span className="action-card__title">Upload audio or video</span>
-            <span className="action-card__sub">Any length, any number of files at once — drop it anywhere here</span>
-          </span>
+          <span className="dropzone__title">Drag and drop to upload audio or video</span>
+          <span className="dropzone__sub">or click to browse files — any length, any format</span>
         </button>
 
         <button
@@ -514,32 +517,33 @@ export function Dashboard({ user }: { user: DashboardUser }) {
         <section className="attachments">
           {pending.map((u) => (
             <div key={u.key} className={`attachment ${u.stage === "error" ? "attachment--error" : ""}`}>
-              {u.stage !== "error" ? (
-                <Waveform file={u.file} />
-              ) : (
-                <div className="attachment__error-body">
+              <FormatBadge filename={u.file.name} contentType={u.file.type} size="md" className="attachment__thumb" />
+              <div className="attachment__body">
+                <div className="attachment__row">
                   <span className="attachment__name">{u.file.name}</span>
-                  <span className="attachment__error-msg">{u.error}</span>
+                  <button
+                    type="button"
+                    className="attachment__close"
+                    onClick={() => dismissPending(u.key)}
+                    aria-label="Remove"
+                  >
+                    ✕
+                  </button>
                 </div>
-              )}
-              <div className="attachment__side">
-                {u.stage === "uploading" && (
-                  <>
-                    <div className="upload-bar">
-                      <span style={{ width: `${u.progress}%` }} />
-                    </div>
-                    <span className="attachment__percent">{u.progress}%</span>
-                  </>
+                {u.stage === "error" ? (
+                  <span className="attachment__error-msg">{u.error}</span>
+                ) : (
+                  <span className="attachment__status">
+                    {formatBytes(Math.round((u.file.size * u.progress) / 100))} of {formatBytes(u.file.size)}
+                    {" · "}
+                    {u.stage === "registering" ? "Saving…" : "Uploading…"}
+                  </span>
                 )}
-                {u.stage === "registering" && <span className="attachment__percent">saving…</span>}
-                <button
-                  type="button"
-                  className="btn btn--icon"
-                  onClick={() => dismissPending(u.key)}
-                  aria-label="Remove"
-                >
-                  ✕
-                </button>
+                {u.stage !== "error" && (
+                  <div className="upload-bar">
+                    <span style={{ width: `${u.stage === "registering" ? 100 : u.progress}%` }} />
+                  </div>
+                )}
               </div>
             </div>
           ))}

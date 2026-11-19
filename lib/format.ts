@@ -27,6 +27,34 @@ export function formatHoursMinutes(totalSeconds: number) {
   return `${h}h ${m}m`;
 }
 
+// Short label for a file's format — read from its name first since that's
+// usually the more specific/accurate signal (contentType is often a generic
+// "audio/mp4" for both m4a and mp4 containers).
+export function fileExt(filename: string, contentType?: string | null) {
+  const fromName = filename.split(".").pop();
+  if (fromName && fromName.length <= 5 && fromName !== filename) return fromName.toUpperCase();
+  const sub = contentType?.split("/")[1];
+  if (sub) return sub.replace("x-", "").toUpperCase().slice(0, 5);
+  return contentType?.startsWith("video") ? "VIDEO" : "AUDIO";
+}
+
+const EXT_TONES: Record<string, string> = {
+  MP3: "mp3",
+  WAV: "wav",
+  M4A: "m4a",
+  AAC: "m4a",
+  FLAC: "wav",
+  OGG: "mp3",
+  MP4: "video",
+  MOV: "video",
+  WEBM: "video",
+  QUICKTIME: "video",
+};
+
+export function fileExtTone(ext: string) {
+  return EXT_TONES[ext] || "default";
+}
+
 export function formatRelativeTime(iso: string) {
   const then = new Date(iso).getTime();
   const diff = Date.now() - then;
