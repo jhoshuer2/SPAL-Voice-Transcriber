@@ -136,13 +136,15 @@ export function DownloadIcon() {
   );
 }
 
+// The logo mark: a bold, flat-color spool/reel disc — a solid ring with a
+// center pin, read at a glance as a reel of tape. currentColor gives the
+// fill; the ring cutout uses --bg so it reads correctly wherever it sits.
 export function ReelIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none">
-      <circle cx="12" cy="12" r="9.5" stroke="currentColor" strokeWidth="1.6" />
-      <circle cx="12" cy="7.5" r="1.6" fill="currentColor" />
-      <circle cx="16" cy="14.5" r="1.6" fill="currentColor" />
-      <circle cx="8" cy="14.5" r="1.6" fill="currentColor" />
+    <svg viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="11" fill="currentColor" />
+      <circle cx="12" cy="12" r="6.1" fill="var(--bg)" />
+      <circle cx="12" cy="12" r="2" fill="currentColor" />
     </svg>
   );
 }
