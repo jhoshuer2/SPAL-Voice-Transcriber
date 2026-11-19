@@ -1,0 +1,20 @@
+name: Dispatch meeting bots
+
+# Vercel's Hobby plan only allows daily cron jobs, which is useless for
+# joining a meeting within a couple of minutes of it starting — so this
+# runs on GitHub Actions' free scheduler instead and just pings our own
+# API route. All the actual work happens server-side in that route;
+# this workflow is nothing but a heartbeat.
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call dispatch-bots
+        run: |
+          curl -fsS -X GET "https://spal-voice-transcriber.vercel.app/api/cron/dispatch-bots" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
