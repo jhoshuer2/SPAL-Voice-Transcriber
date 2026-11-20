@@ -23,6 +23,11 @@
      it still clears 4.5:1 against the photo's most saturated blue. */
   --text-on-photo: #2b2b33;
 
+  /* The hero illustration's own paper color — sampled from the actual
+     PNG (253, 251, 245) — used to backdrop it so there's no visible
+     box edge where the image's cream meets the page. */
+  --hero-cream: #fdfbf5;
+
   --indigo: #4b4ff0;
   --indigo-soft: #eef0ff;
   --indigo-dot: #c7caf7;
@@ -65,60 +70,102 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Gradient-mesh hero, take two: a violet-to-cyan diagonal wash with a
-   radiating sunburst line pattern over it, after the reference Joshua
-   sent — rather than the literal sky photo, which never quite landed.
-   Colors are deliberately kept light/mid-tone rather than full-strength
-   violet or indigo: a saturated dark violet measures under 3:1 against
-   our hero text colors, so the darkest stop here is a lightened
-   periwinkle instead — verified by contrast calculation, not by eye,
-   after the last round of hero changes shipped with text that was
-   unreadable in places. */
+/* Hero illustration, take four — Joshua's own pick: a flat hand-drawn
+   skyline (cassette, headphones, mic, file-stack, cloud-upload) on
+   warm cream paper, after the Wandor reference. The image itself is
+   square with ~40% empty cream at the top (verified by sampling the
+   PNG, not eyeballed). The artwork itself bleeds flat to its own
+   bottom edge (no border/fade drawn in), so background-size: cover
+   is the right fit, not contain — but cover combined with a short box
+   crops the empty headroom away first, leaving no breathing room and
+   cramming every object into view at once. The box is sized tall
+   enough (see the math in the two margin-top rules below, both tied
+   to this same height) that the empty cream headroom survives the
+   crop and the drawn skyline only starts appearing around where the
+   dropzone/action-cards end, instead of overlapping the hero text. A
+   matching cream backdrop sits behind it so there's no seam where the
+   image's own cream meets the page's cooler grey --bg. */
 body::before {
   content: "";
   position: absolute;
   inset: 0 0 auto 0;
-  height: 680px;
+  height: 1100px;
   pointer-events: none;
   z-index: 0;
-  background: linear-gradient(135deg, #8f84f5 0%, #5299e4 55%, #3ad6cf 100%);
-  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 25%, transparent 96%);
-  mask-image: linear-gradient(to bottom, black 0%, black 25%, transparent 96%);
+  background: linear-gradient(to bottom, var(--hero-cream) 0%, var(--hero-cream) 95%, var(--bg) 100%);
 }
 
-/* The radiating line pattern from the reference — generated as plain
-   SVG strokes from a focal point (public/images/sunburst.svg), not a
-   photo, so there's no licensing question and no crop/zoom math like
-   the photo needed. Capped to the content column's width so it lines
-   up with the hero text instead of drifting off on a wide window. */
-.hero-sunburst {
+.hero-illustration {
   position: absolute;
   inset: 0 0 auto 0;
-  height: 680px;
-  max-width: 900px;
+  height: 1100px;
+  max-width: 1100px;
   margin: 0 auto;
   pointer-events: none;
   z-index: 0;
-  background-image: url("/images/sunburst.svg");
+  overflow: hidden;
+  background-image: url("/images/hero-illustration.jpg");
   background-repeat: no-repeat;
-  background-position: top right;
-  background-size: 640px 500px;
-  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 25%, transparent 96%);
-  mask-image: linear-gradient(to bottom, black 0%, black 25%, transparent 96%);
+  background-position: bottom center;
+  background-size: cover;
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 97%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 0%, black 97%, transparent 100%);
+  animation: hero-illustration-float 7s ease-in-out infinite;
 }
 
-/* A light scrim at the very top only, just enough to keep the logo,
-   nav and "Install app"/"Sign in" buttons readable against whatever
-   part of the mesh happens to sit behind them — not a wash over the
-   whole thing, which should otherwise show through clearly. */
-body::after {
-  content: "";
+/* A couple of independent floating notes in the illustration's own
+   empty-cream headroom (well clear of the drawn skyline) — the bit of
+   idle motion Joshua asked for, kept light rather than wiring motion
+   into the static artwork itself. */
+.hero-illustration__note {
   position: absolute;
-  inset: 0 0 auto 0;
-  height: 140px;
-  pointer-events: none;
-  z-index: 0;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 100%);
+  font-size: 22px;
+  color: #d9a688;
+  opacity: 0.55;
+  animation: hero-note-bob 6s ease-in-out infinite;
+}
+
+.hero-illustration__note--a {
+  top: 18%;
+  left: 8%;
+  animation-delay: 0s;
+}
+
+.hero-illustration__note--b {
+  top: 28%;
+  left: 92%;
+  font-size: 17px;
+  color: #a7ab86;
+  animation-delay: -3s;
+}
+
+@keyframes hero-illustration-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes hero-note-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-4deg);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translateY(-10px) rotate(4deg);
+    opacity: 0.7;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-illustration,
+  .hero-illustration__note {
+    animation: none;
+  }
 }
 
 button,
@@ -187,6 +234,11 @@ a {
   width: 24px;
   height: 24px;
   color: var(--indigo);
+  /* ReelIcon's ring-cutout circle fills with --bg so it reads correctly
+     wherever it sits (see components/icons.tsx); over the cream hero
+     band that's --hero-cream rather than the page's cooler --bg, so
+     scope a local override here to avoid a visible grey disc. */
+  --bg: var(--hero-cream);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -207,7 +259,7 @@ a {
 
 .topbar__badge {
   font-size: 11px;
-  color: var(--text-on-photo);
+  color: var(--text-dim);
   border: 1px solid var(--border-strong);
   border-radius: 4px;
   padding: 1px 6px;
@@ -259,7 +311,7 @@ a {
 .hero__tagline {
   position: relative;
   font-size: 14px;
-  color: var(--text-on-photo);
+  color: var(--text-dim);
   margin: 4px 0 0;
 }
 
@@ -276,13 +328,15 @@ a {
 
 .section-eyebrow--actions,
 .section-eyebrow--done {
-  /* These two sit over the hero photo (the others don't) — darker
-     override so they clear AA contrast there; see --text-on-photo. */
-  color: var(--text-on-photo);
+  color: var(--text-faint);
 }
 
 .section-eyebrow--done {
-  margin-top: 24px;
+  /* Extra clearance so "So far" and the library below it land past the
+     illustration's visible skyline (body::before / .hero-illustration
+     are 1100px tall) instead of sitting on top of it — tuned against
+     an actual render, not guessed. */
+  margin-top: 700px;
 }
 
 /* ---------------------------------- action cards (plain) ---------------------------------- */
@@ -756,11 +810,11 @@ a {
 
 .stat-pill__label {
   font-size: 12.5px;
-  color: var(--text-on-photo);
+  color: var(--text-dim);
 }
 
 .stat-pill__sub {
-  color: var(--text-on-photo);
+  color: var(--text-dim);
 }
 
 /* ---------------------------------- library ---------------------------------- */
@@ -772,13 +826,13 @@ a {
 .library__heading {
   font-size: 13px;
   letter-spacing: 0.02em;
-  color: var(--text-on-photo);
+  color: var(--text);
   font-weight: 600;
   margin: 0 0 12px;
 }
 
 .library__empty {
-  color: var(--text-on-photo);
+  color: var(--text-dim);
   font-size: 13.5px;
   padding: 20px 0;
 }

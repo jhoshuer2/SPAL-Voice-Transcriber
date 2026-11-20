@@ -43,7 +43,10 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <div className="hero-sunburst" aria-hidden="true" />
+        <div className="hero-illustration" aria-hidden="true">
+          <span className="hero-illustration__note hero-illustration__note--a">♪</span>
+          <span className="hero-illustration__note hero-illustration__note--b">♪</span>
+        </div>
         {children}
         <PWARegister />
       </body>
