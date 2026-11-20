@@ -28,14 +28,6 @@
      box edge where the image's cream meets the page. */
   --hero-cream: #fdfbf5;
 
-  /* Height of the full-width illustrated backdrop. Grows with viewport
-     width (the source art is square, so widening the box without also
-     growing it taller zooms past the empty headroom) and is clamped
-     so it can't run away on ultrawide monitors or collapse on narrow
-     ones. --hero-clear below is tied to the same value so whatever
-     sits below the illustration always clears it, at any width. */
-  --hero-h: clamp(760px, 57vw + 420px, 1600px);
-
   --indigo: #4b4ff0;
   --indigo-soft: #eef0ff;
   --indigo-dot: #c7caf7;
@@ -78,26 +70,48 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Hero illustration, take four — Joshua's own pick: a flat hand-drawn
-   skyline (cassette, headphones, mic, file-stack, cloud-upload) on
-   warm cream paper, after the Wandor reference. The image itself is
-   square with ~40% empty cream at the top (verified by sampling the
-   PNG, not eyeballed). The artwork itself bleeds flat to its own
-   bottom edge (no border/fade drawn in), so background-size: cover
-   is the right fit, not contain — but cover combined with a short box
-   crops the empty headroom away first, leaving no breathing room and
-   cramming every object into view at once. The box is sized tall
-   enough (see the math in the two margin-top rules below, both tied
-   to this same height) that the empty cream headroom survives the
-   crop and the drawn skyline only starts appearing around where the
-   dropzone/action-cards end, instead of overlapping the hero text. A
-   matching cream backdrop sits behind it so there's no seam where the
-   image's own cream meets the page's cooler grey --bg. */
-body::before {
+/* Hero illustration, take five — scoped strictly to the hero zone
+   (topbar through the dropzone/action cards), not the whole page.
+   Earlier versions sized this backdrop to the page and then had to
+   coordinate a separate margin-top elsewhere so the Library section
+   wouldn't sit under it — fragile, and it still read as a picture
+   placed on the page rather than a true background. Now .hero-zone
+   is the positioned, clipped box: the backdrop fills it exactly
+   (inset: 0 on all sides) and `overflow: hidden` means it is
+   physically impossible for it to reach anything below the hero
+   zone, however tall its content gets (wrapping text, a longer
+   upload list, a translation). No coordination with anything
+   elsewhere on the page is needed for that to hold. */
+.hero-zone {
+  position: relative;
+  overflow: hidden;
+  /* Floor so the (square) artwork still gets enough height to show
+     its skyline and empty headroom rather than being squashed into a
+     thin strip on a wide screen with little hero text. Content is
+     free to push past this — the backdrop just grows to match. */
+  min-height: clamp(760px, 57vw + 420px, 1600px);
+  /* Break out of .shell's max-width/centering to the full viewport
+     width — a standard full-bleed trick. This box's own static
+     position already sits at .shell's (centered, padded) content
+     left edge; shifting left by (50% of that content width minus
+     50% of the viewport width) lands its left edge at the viewport's
+     left edge exactly, regardless of .shell's own width or padding.
+     Only the backdrop (full width) should bleed; the real content
+     is re-centered to the page's normal column by .hero-zone__inner. */
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+}
+
+.hero-zone__inner {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.hero-zone::before {
   content: "";
   position: absolute;
-  inset: 0 0 auto 0;
-  height: var(--hero-h);
+  inset: 0;
   pointer-events: none;
   z-index: 0;
   background: linear-gradient(to bottom, var(--hero-cream) 0%, var(--hero-cream) 95%, var(--bg) 100%);
@@ -105,20 +119,9 @@ body::before {
 
 .hero-illustration {
   position: absolute;
-  inset: 0 0 auto 0;
-  /* Full page width, not a capped/centered box — a framed island of
-     art in the middle of a flat band is what read as "an image on
-     the background" instead of being the background. Height scales
-     with viewport width (the source is a square image, so the same
-     width-driven `cover` scale that sizes it across also has to grow
-     its box taller, or the headroom above the skyline gets eaten at
-     wide viewports). Tuned so the drawn skyline starts appearing
-     around the same page y (~440px, just below the dropzone/action
-     cards) at common desktop widths. */
-  height: var(--hero-h);
+  inset: 0;
   pointer-events: none;
   z-index: 0;
-  overflow: hidden;
   background-image: url("/images/hero-illustration.jpg");
   background-repeat: no-repeat;
   background-position: bottom center;
@@ -126,6 +129,16 @@ body::before {
   -webkit-mask-image: linear-gradient(to bottom, black 0%, black 97%, transparent 100%);
   mask-image: linear-gradient(to bottom, black 0%, black 97%, transparent 100%);
   animation: hero-illustration-float 7s ease-in-out infinite;
+}
+
+/* The real content (topbar, title, dropzone, action cards, in-flight
+   uploads) needs to paint above the backdrop, not be a transparent
+   cutout over it — give it its own stacking position explicitly
+   rather than relying on source order against position: absolute
+   siblings. */
+.hero-zone__inner {
+  position: relative;
+  z-index: 1;
 }
 
 /* A couple of independent floating notes in the illustration's own
@@ -347,13 +360,10 @@ a {
 }
 
 .section-eyebrow--done {
-  /* Extra clearance so "So far" and the library below it land past the
-     illustration's visible skyline instead of sitting on top of it.
-     Tied to the same --hero-h the backdrop uses (minus the roughly
-     fixed height of everything above this point — topbar, title,
-     tagline, dropzone, action cards) so it still clears at any
-     viewport width, not just the one it was tuned against. */
-  margin-top: calc(var(--hero-h) - 400px);
+  /* Plain breathing room — the illustration itself is now clipped to
+     .hero-zone above and can never reach down here, so this no longer
+     needs to be tied to the backdrop's height at all. */
+  margin-top: 40px;
 }
 
 /* ---------------------------------- action cards (plain) ---------------------------------- */
