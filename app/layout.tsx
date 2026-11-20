@@ -43,8 +43,7 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <div className="cloud-wisp" aria-hidden="true" />
-        <div className="cloud-wisp--trail" aria-hidden="true" />
+        <div className="cloud-shape" aria-hidden="true" />
         {children}
         <PWARegister />
       </body>

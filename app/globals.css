@@ -89,52 +89,33 @@ body::after {
   mask-image: linear-gradient(to bottom, black 0%, black 25%, transparent 96%);
 }
 
-/* The cloud itself — now the main visual, sized and placed the way the
-   reference photo's wisp sits: a wide, thin, horizontal streak stretched
-   across the open sky, with a denser body and a thinner trailing wisp
-   so it has some depth rather than reading as one flat blur. Real
-   blurred elements, not an SVG filter used as a background-image (that
-   combination rendered as a solid block on some software-GL renderers
-   when tried earlier). */
-.cloud-wisp {
+/* The cloud itself — a puffy cumulus silhouette, not a thin wisp:
+   several overlapping solid-white circles ("metaball" style) build the
+   bumpy cloud outline, then a blur softens just the edges so it reads
+   as atmospheric rather than a flat cutout. Deliberately not full
+   opacity/sharp — it needs to sit behind the heading and nav without
+   fighting them for attention, so the page content stays very
+   readable on top of it. Real blurred element, not an SVG filter used
+   as a background-image (that combination rendered as a solid block
+   on some software-GL renderers when tried earlier). */
+.cloud-shape {
   position: absolute;
-  top: 54px;
-  left: -8%;
-  width: 90%;
-  height: 70px;
+  top: 6px;
+  right: 2%;
+  width: 420px;
+  height: 210px;
+  max-width: 60%;
   pointer-events: none;
   z-index: 0;
+  opacity: 0.85;
   background:
-    radial-gradient(50% 55% at 22% 55%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.55) 45%, transparent 78%),
-    radial-gradient(45% 60% at 48% 40%, rgba(255, 255, 255, 0.9) 0%, transparent 75%),
-    radial-gradient(40% 50% at 70% 60%, rgba(255, 255, 255, 0.8) 0%, transparent 78%),
-    radial-gradient(35% 45% at 90% 50%, rgba(255, 255, 255, 0.55) 0%, transparent 82%);
-  filter: blur(11px);
-  transform: rotate(-4deg);
-  -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 14%, black 80%, transparent 100%);
-  mask-image: linear-gradient(90deg, transparent 0%, black 14%, black 80%, transparent 100%);
-  mix-blend-mode: screen;
-}
-
-/* A thinner trailing wisp beneath the main one, offset and fainter —
-   the layering the reference photo's cloud has, instead of one single
-   flat streak. */
-.cloud-wisp--trail {
-  position: absolute;
-  top: 108px;
-  left: 6%;
-  width: 60%;
-  height: 34px;
-  pointer-events: none;
-  z-index: 0;
-  background:
-    radial-gradient(50% 55% at 30% 50%, rgba(255, 255, 255, 0.7) 0%, transparent 78%),
-    radial-gradient(45% 55% at 68% 48%, rgba(255, 255, 255, 0.55) 0%, transparent 80%);
-  filter: blur(10px);
-  transform: rotate(-3deg);
-  -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 20%, black 78%, transparent 100%);
-  mask-image: linear-gradient(90deg, transparent 0%, black 20%, black 78%, transparent 100%);
-  mix-blend-mode: screen;
+    radial-gradient(circle at 30% 68%, #fff 0%, #fff 36%, transparent 64%),
+    radial-gradient(circle at 52% 46%, #fff 0%, #fff 40%, transparent 68%),
+    radial-gradient(circle at 73% 60%, #fff 0%, #fff 34%, transparent 66%),
+    radial-gradient(circle at 44% 78%, #fff 0%, #fff 32%, transparent 64%),
+    radial-gradient(circle at 18% 52%, #fff 0%, #fff 28%, transparent 62%),
+    radial-gradient(circle at 86% 44%, #fff 0%, #fff 26%, transparent 60%);
+  filter: blur(16px);
 }
 
 button,
