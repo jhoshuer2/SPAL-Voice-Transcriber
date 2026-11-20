@@ -73,13 +73,6 @@ body::before {
   pointer-events: none;
   z-index: 0;
   background:
-    /* Two soft wisps — elongated radial gradients, not a photo or a
-       filtered SVG (the latter rendered as a solid block on some
-       software-GL renderers when combined with the mask below) —
-       echoing the thin elongated cloud streak from the reference shot
-       without the weight or licensing question an actual photo brings. */
-    radial-gradient(38% 10% at 18% 2%, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.35) 45%, transparent 75%),
-    radial-gradient(26% 7% at 68% 10%, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.25) 50%, transparent 78%),
     radial-gradient(48% 55% at 10% -8%, color-mix(in srgb, var(--indigo) 70%, white) 0%, transparent 62%),
     radial-gradient(42% 50% at 98% -4%, color-mix(in srgb, var(--green) 65%, white) 0%, transparent 65%),
     radial-gradient(55% 60% at 55% 20%, color-mix(in srgb, var(--indigo) 30%, white) 0%, transparent 70%),
@@ -106,6 +99,33 @@ body::after {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   -webkit-mask-image: linear-gradient(to bottom, black 0%, black 30%, transparent 96%);
   mask-image: linear-gradient(to bottom, black 0%, black 30%, transparent 96%);
+}
+
+/* The actual cloud wisp — a real blurred element, not a background
+   gradient layer, so it reads as a distinct streak sitting above the
+   mesh rather than blending into its other soft-white highlights.
+   Three overlapping blobs squashed and rotated into an elongated
+   shape, then blurred, the way the reference's wispy cloud stretches
+   thin across the sky. Plain CSS filter: blur on a real box — not an
+   SVG filter used as a background-image — so it's unrelated to the
+   earlier software-GL rendering issue. */
+.cloud-wisp {
+  position: absolute;
+  top: 34px;
+  left: 4%;
+  width: 62%;
+  height: 46px;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(50% 50% at 28% 50%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.6) 48%, transparent 80%),
+    radial-gradient(50% 50% at 62% 42%, rgba(255, 255, 255, 0.85) 0%, transparent 80%),
+    radial-gradient(50% 55% at 85% 58%, rgba(255, 255, 255, 0.55) 0%, transparent 85%);
+  filter: blur(9px);
+  transform: rotate(-7deg);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 18%, black 75%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, black 18%, black 75%, transparent 100%);
+  mix-blend-mode: screen;
 }
 
 button,
