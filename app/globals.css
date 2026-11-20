@@ -98,24 +98,46 @@ body::after {
    readable on top of it. Real blurred element, not an SVG filter used
    as a background-image (that combination rendered as a solid block
    on some software-GL renderers when tried earlier). */
-.cloud-shape {
+/* Positioned relative to the content column (same max-width/padding as
+   .shell), not the raw viewport — otherwise on a wide window it drifts
+   off to the browser's edge, far past where the hero text actually
+   sits, and reads as barely-there instead of as the hero's cloud. */
+.sky-content {
   position: absolute;
-  top: 6px;
-  right: 2%;
-  width: 420px;
-  height: 210px;
-  max-width: 60%;
+  inset: 0 0 auto 0;
+  height: 300px;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 24px;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.85;
+}
+
+.cloud-shape {
+  position: absolute;
+  top: -4px;
+  right: 0;
+  width: 560px;
+  height: 190px;
+  max-width: 78%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.95;
+  /* Fixed-px circle sizes, not percentages — a bare "circle at X% Y%"
+     defaults to a radius that reaches the box's farthest corner, which
+     filled the whole box solid and read as a white card, not a cloud.
+     Explicit small radii keep each bump a discrete blob, with sky
+     showing through the gaps between them, the way real cumulus puffs
+     sit next to each other rather than fusing into one slab. */
   background:
-    radial-gradient(circle at 30% 68%, #fff 0%, #fff 36%, transparent 64%),
-    radial-gradient(circle at 52% 46%, #fff 0%, #fff 40%, transparent 68%),
-    radial-gradient(circle at 73% 60%, #fff 0%, #fff 34%, transparent 66%),
-    radial-gradient(circle at 44% 78%, #fff 0%, #fff 32%, transparent 64%),
-    radial-gradient(circle at 18% 52%, #fff 0%, #fff 28%, transparent 62%),
-    radial-gradient(circle at 86% 44%, #fff 0%, #fff 26%, transparent 60%);
-  filter: blur(16px);
+    radial-gradient(circle 54px at 55px 118px, #fff 0 44px, transparent 56px),
+    radial-gradient(circle 66px at 140px 76px, #fff 0 55px, transparent 68px),
+    radial-gradient(circle 74px at 235px 92px, #fff 0 62px, transparent 76px),
+    radial-gradient(circle 70px at 325px 64px, #fff 0 58px, transparent 72px),
+    radial-gradient(circle 62px at 405px 88px, #fff 0 52px, transparent 64px),
+    radial-gradient(circle 50px at 470px 106px, #fff 0 42px, transparent 52px),
+    radial-gradient(ellipse 260px 58px at 255px 132px, #fff 0 52px, transparent 90%);
+  filter: blur(6px);
 }
 
 button,

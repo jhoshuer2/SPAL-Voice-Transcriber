@@ -43,7 +43,9 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <div className="cloud-shape" aria-hidden="true" />
+        <div className="sky-content" aria-hidden="true">
+          <div className="cloud-shape" />
+        </div>
         {children}
         <PWARegister />
       </body>
