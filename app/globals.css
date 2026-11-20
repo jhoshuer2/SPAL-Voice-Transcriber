@@ -28,6 +28,14 @@
      box edge where the image's cream meets the page. */
   --hero-cream: #fdfbf5;
 
+  /* Height of the full-width illustrated backdrop. Grows with viewport
+     width (the source art is square, so widening the box without also
+     growing it taller zooms past the empty headroom) and is clamped
+     so it can't run away on ultrawide monitors or collapse on narrow
+     ones. --hero-clear below is tied to the same value so whatever
+     sits below the illustration always clears it, at any width. */
+  --hero-h: clamp(760px, 57vw + 420px, 1600px);
+
   --indigo: #4b4ff0;
   --indigo-soft: #eef0ff;
   --indigo-dot: #c7caf7;
@@ -89,7 +97,7 @@ body::before {
   content: "";
   position: absolute;
   inset: 0 0 auto 0;
-  height: 1100px;
+  height: var(--hero-h);
   pointer-events: none;
   z-index: 0;
   background: linear-gradient(to bottom, var(--hero-cream) 0%, var(--hero-cream) 95%, var(--bg) 100%);
@@ -98,9 +106,16 @@ body::before {
 .hero-illustration {
   position: absolute;
   inset: 0 0 auto 0;
-  height: 1100px;
-  max-width: 1100px;
-  margin: 0 auto;
+  /* Full page width, not a capped/centered box — a framed island of
+     art in the middle of a flat band is what read as "an image on
+     the background" instead of being the background. Height scales
+     with viewport width (the source is a square image, so the same
+     width-driven `cover` scale that sizes it across also has to grow
+     its box taller, or the headroom above the skyline gets eaten at
+     wide viewports). Tuned so the drawn skyline starts appearing
+     around the same page y (~440px, just below the dropzone/action
+     cards) at common desktop widths. */
+  height: var(--hero-h);
   pointer-events: none;
   z-index: 0;
   overflow: hidden;
@@ -333,10 +348,12 @@ a {
 
 .section-eyebrow--done {
   /* Extra clearance so "So far" and the library below it land past the
-     illustration's visible skyline (body::before / .hero-illustration
-     are 1100px tall) instead of sitting on top of it — tuned against
-     an actual render, not guessed. */
-  margin-top: 700px;
+     illustration's visible skyline instead of sitting on top of it.
+     Tied to the same --hero-h the backdrop uses (minus the roughly
+     fixed height of everything above this point — topbar, title,
+     tagline, dropzone, action cards) so it still clears at any
+     viewport width, not just the one it was tuned against. */
+  margin-top: calc(var(--hero-h) - 400px);
 }
 
 /* ---------------------------------- action cards (plain) ---------------------------------- */
