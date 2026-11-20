@@ -43,8 +43,9 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <div className="sky-content" aria-hidden="true">
-          <div className="cloud-shape" />
+        <div className="hero-photo" aria-hidden="true">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/images/hero-sky.jpg" alt="" />
         </div>
         {children}
         <PWARegister />
