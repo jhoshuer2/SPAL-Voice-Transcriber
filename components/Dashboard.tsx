@@ -400,22 +400,6 @@ export function Dashboard({ user }: { user: DashboardUser }) {
 
   return (
     <main className="shell">
-      <div className="hero-zone">
-        {/* Illustrated backdrop, scoped and clipped to this wrapper only —
-            it can never reach the Library section below because it is
-            physically confined to this box (overflow: hidden on
-            .hero-zone), not sized to match it via a parallel formula. */}
-        <div className="hero-illustration" aria-hidden="true">
-          <span className="hero-illustration__note hero-illustration__note--a">♪</span>
-          <span className="hero-illustration__note hero-illustration__note--b">♪</span>
-        </div>
-
-        {/* .hero-zone itself breaks out to full viewport width so the
-            backdrop above reads as a true background, not a framed
-            picture in the middle of the page — but the real content
-            still needs to line up with the rest of the (max-width,
-            centered) page, hence this inner wrapper. */}
-        <div className="hero-zone__inner">
       <header className="topbar">
         <div className="topbar__brand">
           <span className="topbar__mark" aria-hidden>
@@ -618,9 +602,14 @@ export function Dashboard({ user }: { user: DashboardUser }) {
           ))}
         </section>
       )}
-        </div>
-      </div>
 
+      {/* Now that the illustration is a plain page background (no box,
+          no height to clear), this panel is what keeps the stats and
+          Library readable regardless of how far down the artwork
+          happens to reach at a given viewport width — a solid card,
+          the same way the dropzone/action cards above are already
+          solid cards on top of the same backdrop. */}
+      <div className="content-panel">
       <p className="section-eyebrow section-eyebrow--done">So far</p>
 
       <section className="stats">
@@ -706,6 +695,7 @@ export function Dashboard({ user }: { user: DashboardUser }) {
           </div>
         )}
       </section>
+      </div>
 
       {signInPrompt && !user && (
         <SignInPrompt kind={signInPrompt} onDismiss={dismissSignInPrompt} />

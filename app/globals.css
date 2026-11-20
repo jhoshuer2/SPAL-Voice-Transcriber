@@ -70,130 +70,31 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Hero illustration, take five — scoped strictly to the hero zone
-   (topbar through the dropzone/action cards), not the whole page.
-   Earlier versions sized this backdrop to the page and then had to
-   coordinate a separate margin-top elsewhere so the Library section
-   wouldn't sit under it — fragile, and it still read as a picture
-   placed on the page rather than a true background. Now .hero-zone
-   is the positioned, clipped box: the backdrop fills it exactly
-   (inset: 0 on all sides) and `overflow: hidden` means it is
-   physically impossible for it to reach anything below the hero
-   zone, however tall its content gets (wrapping text, a longer
-   upload list, a translation). No coordination with anything
-   elsewhere on the page is needed for that to hold. */
-.hero-zone {
-  position: relative;
-  overflow: hidden;
-  /* Floor so the (square) artwork still gets enough height to show
-     its skyline and empty headroom rather than being squashed into a
-     thin strip on a wide screen with little hero text. Content is
-     free to push past this — the backdrop just grows to match. */
-  min-height: clamp(760px, 57vw + 420px, 1600px);
-  /* Break out of .shell's max-width/centering to the full viewport
-     width — a standard full-bleed trick. This box's own static
-     position already sits at .shell's (centered, padded) content
-     left edge; shifting left by (50% of that content width minus
-     50% of the viewport width) lands its left edge at the viewport's
-     left edge exactly, regardless of .shell's own width or padding.
-     Only the backdrop (full width) should bleed; the real content
-     is re-centered to the page's normal column by .hero-zone__inner. */
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
-}
+/* Hero illustration, take six — a true page background, not an
+   element with its own box. Every earlier version was a positioned
+   box sized to match (or clip to) some amount of content, and every
+   one of those pairings eventually showed a seam: a gap, a crop, or
+   an edge where the "background" visibly started and stopped like a
+   picture frame. A CSS background on body has none of that — it
+   isn't a box in the layout, so there's nothing for content to
+   overlap, clear, or get interrupted by. It paints once, behind
+   everything, and the page's normal content (unchanged from before
+   all of this) just sits on top of it everywhere, the way a
+   background is supposed to work.
 
-.hero-zone__inner {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 0 24px;
-}
-
-.hero-zone::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background: linear-gradient(to bottom, var(--hero-cream) 0%, var(--hero-cream) 95%, var(--bg) 100%);
-}
-
-.hero-illustration {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
+   It's anchored to the top of the document (not the viewport) and
+   scrolls with the page like any other background — so it shows once,
+   right where people land, and everything below (including deep down
+   on a long Library list) just continues in the same flat paper
+   color, same as a plain background would, except nicer. --hero-cream
+   behind it carries that paper color past the image's own edges so
+   there's no seam there either. */
+body {
+  background-color: var(--hero-cream);
   background-image: url("/images/hero-illustration.jpg");
   background-repeat: no-repeat;
-  background-position: bottom center;
-  background-size: cover;
-  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 97%, transparent 100%);
-  mask-image: linear-gradient(to bottom, black 0%, black 97%, transparent 100%);
-  animation: hero-illustration-float 7s ease-in-out infinite;
-}
-
-/* The real content (topbar, title, dropzone, action cards, in-flight
-   uploads) needs to paint above the backdrop, not be a transparent
-   cutout over it — give it its own stacking position explicitly
-   rather than relying on source order against position: absolute
-   siblings. */
-.hero-zone__inner {
-  position: relative;
-  z-index: 1;
-}
-
-/* A couple of independent floating notes in the illustration's own
-   empty-cream headroom (well clear of the drawn skyline) — the bit of
-   idle motion Joshua asked for, kept light rather than wiring motion
-   into the static artwork itself. */
-.hero-illustration__note {
-  position: absolute;
-  font-size: 22px;
-  color: #d9a688;
-  opacity: 0.55;
-  animation: hero-note-bob 6s ease-in-out infinite;
-}
-
-.hero-illustration__note--a {
-  top: 18%;
-  left: 8%;
-  animation-delay: 0s;
-}
-
-.hero-illustration__note--b {
-  top: 28%;
-  left: 92%;
-  font-size: 17px;
-  color: #a7ab86;
-  animation-delay: -3s;
-}
-
-@keyframes hero-illustration-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-6px);
-  }
-}
-
-@keyframes hero-note-bob {
-  0%,
-  100% {
-    transform: translateY(0) rotate(-4deg);
-    opacity: 0.4;
-  }
-  50% {
-    transform: translateY(-10px) rotate(4deg);
-    opacity: 0.7;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hero-illustration,
-  .hero-illustration__note {
-    animation: none;
-  }
+  background-position: top center;
+  background-size: min(1400px, 150vw) auto;
 }
 
 button,
@@ -359,12 +260,6 @@ a {
   color: var(--text-faint);
 }
 
-.section-eyebrow--done {
-  /* Plain breathing room — the illustration itself is now clipped to
-     .hero-zone above and can never reach down here, so this no longer
-     needs to be tied to the backdrop's height at all. */
-  margin-top: 40px;
-}
 
 /* ---------------------------------- action cards (plain) ---------------------------------- */
 
@@ -844,10 +739,19 @@ a {
   color: var(--text-dim);
 }
 
+.content-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 24px;
+  margin-top: 32px;
+}
+
 /* ---------------------------------- library ---------------------------------- */
 
 .library {
-  margin-top: 32px;
+  margin-top: 0;
 }
 
 .library__heading {
