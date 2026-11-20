@@ -96,9 +96,13 @@ body {
 }
 
 .bg-shader__wash {
+  /* Positive z-index so this sits above the shader's <canvas>, which
+     renders with no explicit position (static) — a negative z-index
+     here would stack it below that normal-flow canvas, inside
+     .bg-shader's own stacking context, and have no visible effect. */
   position: absolute;
   inset: 0;
-  z-index: -1;
+  z-index: 1;
   background: rgba(255, 255, 255, 0.86);
 }
 

@@ -1,9 +1,9 @@
 "use client";
 
-import { MeshGradient } from "@paper-design/shaders-react";
+import { GrainGradient } from "@paper-design/shaders-react";
 
 /**
- * Page background — an animated mesh gradient (Paper Shaders), replacing
+ * Page background — an animated grain gradient (Paper Shaders), replacing
  * the earlier illustration. Rendered as a fixed, full-viewport layer behind
  * everything (see .bg-shader / .bg-shader__wash in globals.css for the
  * stacking), so — same as the corner illustrations before it — it takes up
@@ -17,13 +17,14 @@ import { MeshGradient } from "@paper-design/shaders-react";
 export function ShaderBackground() {
   return (
     <div className="bg-shader" aria-hidden="true">
-      <MeshGradient
+      <GrainGradient
         style={{ width: "100%", height: "100%" }}
-        colors={["#e0eaff", "#241d9a", "#f75092", "#9f50d3"]}
-        distortion={0.8}
-        swirl={0.1}
-        grainMixer={0}
-        grainOverlay={0}
+        colors={["#7300ff", "#eba8ff", "#00bfff", "#2b00ff"]}
+        colorBack="#000000"
+        softness={0.5}
+        intensity={0.5}
+        noise={0.25}
+        shape="corners"
         speed={1}
         scale={1}
         rotation={0}
