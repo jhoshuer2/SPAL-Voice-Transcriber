@@ -70,50 +70,36 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Hero illustration, take seven — two decorative corner pieces pinned
-   to the viewport, not the document. Every earlier version was a
-   single image occupying some amount of space in the page — a sized
-   box, or a body background keyed to document height — and anything
-   sized to the page eventually interrupted the page: a gap before it,
-   a seam at its edge, or (at a tall viewport / short content) empty
-   cream the full height of the window before it ever appeared.
+/* Page background, take eight — an animated mesh-gradient shader in
+   place of the illustration. Same reasoning as the corner pieces it
+   replaces: position: fixed, full viewport, out of document flow
+   entirely, so it can't overlap, clip, or be interrupted by content —
+   it's simply always there behind everything, the way a background
+   is supposed to work.
 
-   Splitting the art into two pieces and fixing each to its own bottom
-   corner sidesteps that entirely: position: fixed takes them out of
-   layout completely, so they take up no document space at all, can't
-   push on or get pushed by anything, and never need to be matched to
-   content height. They're simply always there, in the corners, behind
-   whatever's on screen — the same way a desktop wallpaper sits behind
-   open windows. --hero-cream is still the flat paper color everywhere
-   else, so the art reads as part of the background rather than a
-   picture sitting on top of one. */
+   The shader canvas sits at the very back; a translucent white wash
+   layers on top of it (still behind .shell's z-index: 1 content) so
+   the saturated gradient colors read as a soft, moving tint rather
+   than overpowering the page, and the existing --text / --text-dim
+   colors (tuned for a light background) keep their contrast without
+   every piece of copy needing its own opaque card. */
 body {
-  background-color: var(--hero-cream);
+  background-color: #e0eaff;
 }
 
-.bg-corner {
+.bg-shader {
   position: fixed;
-  bottom: 0;
-  z-index: -1;
-  width: clamp(200px, 24vw, 420px);
-  height: auto;
+  inset: 0;
+  z-index: -2;
+  overflow: hidden;
   pointer-events: none;
-  user-select: none;
 }
 
-.bg-corner--left {
-  left: 0;
-}
-
-.bg-corner--right {
-  right: 0;
-}
-
-@media (max-width: 640px) {
-  .bg-corner {
-    width: clamp(130px, 42vw, 220px);
-    opacity: 0.85;
-  }
+.bg-shader__wash {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: rgba(255, 255, 255, 0.86);
 }
 
 button,
