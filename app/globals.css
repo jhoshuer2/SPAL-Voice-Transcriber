@@ -65,19 +65,15 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* The actual chosen photo — blue sky, one fluffy cumulus cloud, green
-   fields below — as a real cover-sized image rather than an attempt
-   to approximate it with gradients. Width is capped (not full
-   viewport): object-fit: cover sized to the *viewport's* width would,
-   on a very wide monitor, scale the image up so much that a 680px-tall
-   band only ever shows sky — the cloud and the fields are ~900px apart
-   at that scale, further than the band is tall. Capping the width
-   keeps the scale (and so the crop) consistent, so both the cloud and
-   the fields actually stay in frame rather than just the cloud. */
-/* A full-width sky-colored backdrop behind the capped photo, sampled
-   from the photo's own top blue — otherwise the capped width leaves a
-   hard seam where the photo ends and the plain page background
-   begins on anything wider than 1600px. */
+/* Gradient-mesh hero, take two: a violet-to-cyan diagonal wash with a
+   radiating sunburst line pattern over it, after the reference Joshua
+   sent — rather than the literal sky photo, which never quite landed.
+   Colors are deliberately kept light/mid-tone rather than full-strength
+   violet or indigo: a saturated dark violet measures under 3:1 against
+   our hero text colors, so the darkest stop here is a lightened
+   periwinkle instead — verified by contrast calculation, not by eye,
+   after the last round of hero changes shipped with text that was
+   unreadable in places. */
 body::before {
   content: "";
   position: absolute;
@@ -85,35 +81,36 @@ body::before {
   height: 680px;
   pointer-events: none;
   z-index: 0;
-  background: linear-gradient(180deg, #257bd3 0%, #5b9bdf 55%, #bcd6ef 100%);
+  background: linear-gradient(135deg, #8f84f5 0%, #5299e4 55%, #3ad6cf 100%);
   -webkit-mask-image: linear-gradient(to bottom, black 0%, black 25%, transparent 96%);
   mask-image: linear-gradient(to bottom, black 0%, black 25%, transparent 96%);
 }
 
-.hero-photo {
+/* The radiating line pattern from the reference — generated as plain
+   SVG strokes from a focal point (public/images/sunburst.svg), not a
+   photo, so there's no licensing question and no crop/zoom math like
+   the photo needed. Capped to the content column's width so it lines
+   up with the hero text instead of drifting off on a wide window. */
+.hero-sunburst {
   position: absolute;
   inset: 0 0 auto 0;
   height: 680px;
-  max-width: 1600px;
+  max-width: 900px;
   margin: 0 auto;
-  overflow: hidden;
   pointer-events: none;
   z-index: 0;
+  background-image: url("/images/sunburst.svg");
+  background-repeat: no-repeat;
+  background-position: top right;
+  background-size: 640px 500px;
   -webkit-mask-image: linear-gradient(to bottom, black 0%, black 25%, transparent 96%);
   mask-image: linear-gradient(to bottom, black 0%, black 25%, transparent 96%);
-}
-
-.hero-photo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center top;
 }
 
 /* A light scrim at the very top only, just enough to keep the logo,
    nav and "Install app"/"Sign in" buttons readable against whatever
-   part of the sky happens to sit behind them — not a wash over the
-   whole photo, which should otherwise show through clearly. */
+   part of the mesh happens to sit behind them — not a wash over the
+   whole thing, which should otherwise show through clearly. */
 body::after {
   content: "";
   position: absolute;

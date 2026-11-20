@@ -43,10 +43,7 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <div className="hero-photo" aria-hidden="true">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/hero-sky.jpg" alt="" />
-        </div>
+        <div className="hero-sunburst" aria-hidden="true" />
         {children}
         <PWARegister />
       </body>
