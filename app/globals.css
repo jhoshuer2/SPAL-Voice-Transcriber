@@ -70,31 +70,50 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Hero illustration, take six — a true page background, not an
-   element with its own box. Every earlier version was a positioned
-   box sized to match (or clip to) some amount of content, and every
-   one of those pairings eventually showed a seam: a gap, a crop, or
-   an edge where the "background" visibly started and stopped like a
-   picture frame. A CSS background on body has none of that — it
-   isn't a box in the layout, so there's nothing for content to
-   overlap, clear, or get interrupted by. It paints once, behind
-   everything, and the page's normal content (unchanged from before
-   all of this) just sits on top of it everywhere, the way a
-   background is supposed to work.
+/* Hero illustration, take seven — two decorative corner pieces pinned
+   to the viewport, not the document. Every earlier version was a
+   single image occupying some amount of space in the page — a sized
+   box, or a body background keyed to document height — and anything
+   sized to the page eventually interrupted the page: a gap before it,
+   a seam at its edge, or (at a tall viewport / short content) empty
+   cream the full height of the window before it ever appeared.
 
-   It's anchored to the top of the document (not the viewport) and
-   scrolls with the page like any other background — so it shows once,
-   right where people land, and everything below (including deep down
-   on a long Library list) just continues in the same flat paper
-   color, same as a plain background would, except nicer. --hero-cream
-   behind it carries that paper color past the image's own edges so
-   there's no seam there either. */
+   Splitting the art into two pieces and fixing each to its own bottom
+   corner sidesteps that entirely: position: fixed takes them out of
+   layout completely, so they take up no document space at all, can't
+   push on or get pushed by anything, and never need to be matched to
+   content height. They're simply always there, in the corners, behind
+   whatever's on screen — the same way a desktop wallpaper sits behind
+   open windows. --hero-cream is still the flat paper color everywhere
+   else, so the art reads as part of the background rather than a
+   picture sitting on top of one. */
 body {
   background-color: var(--hero-cream);
-  background-image: url("/images/hero-illustration.jpg");
-  background-repeat: no-repeat;
-  background-position: top center;
-  background-size: min(1400px, 150vw) auto;
+}
+
+.bg-corner {
+  position: fixed;
+  bottom: 0;
+  z-index: -1;
+  width: clamp(200px, 24vw, 420px);
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+}
+
+.bg-corner--left {
+  left: 0;
+}
+
+.bg-corner--right {
+  right: 0;
+}
+
+@media (max-width: 640px) {
+  .bg-corner {
+    width: clamp(130px, 42vw, 220px);
+    opacity: 0.85;
+  }
 }
 
 button,

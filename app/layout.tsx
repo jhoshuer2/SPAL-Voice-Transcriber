@@ -43,6 +43,23 @@ export default function RootLayout({
         />
       </head>
       <body>
+        {/* Decorative page background — pinned to the viewport corners, not
+            part of document flow, so there is nothing here for content to
+            overlap, clear, or get interrupted by. It sits behind every
+            section via z-index, visible only where a section doesn't paint
+            its own background (cards still sit cleanly on top). */}
+        <img
+          src="/images/hero-left.png"
+          alt=""
+          aria-hidden="true"
+          className="bg-corner bg-corner--left"
+        />
+        <img
+          src="/images/hero-right.png"
+          alt=""
+          aria-hidden="true"
+          className="bg-corner bg-corner--right"
+        />
         {children}
         <PWARegister />
       </body>
