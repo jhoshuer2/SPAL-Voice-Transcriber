@@ -57,74 +57,83 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* The color-mesh lives here now, not on .hero — a page-wide wash that
-   sits behind the topbar + hero and fades (via mask-image) into the
-   flat --bg beneath it, rather than reading as a distinct card.
-   First pass used only the pale -soft tokens and read as flat/washed
-   out next to the photographic references — richer now: full-strength
-   indigo/green mixed down from white (not just the pale swatches),
-   more overlapping blooms for depth, a diagonal light-sweep like the
-   references' light-leak diagonals, and a touch of extra saturation. */
+/* Dropped the color-mesh — a plain open-sky wash instead: a soft pale
+   blue fading down into the page's neutral --bg. The cloud is the
+   visual now, the way it is in the reference shot, not a colorful
+   gradient with a cloud squeezed in as an afterthought. */
 body::before {
   content: "";
   position: absolute;
   inset: 0 0 auto 0;
-  height: 680px;
+  height: 620px;
   pointer-events: none;
   z-index: 0;
-  background:
-    radial-gradient(48% 55% at 10% -8%, color-mix(in srgb, var(--indigo) 70%, white) 0%, transparent 62%),
-    radial-gradient(42% 50% at 98% -4%, color-mix(in srgb, var(--green) 65%, white) 0%, transparent 65%),
-    radial-gradient(55% 60% at 55% 20%, color-mix(in srgb, var(--indigo) 30%, white) 0%, transparent 70%),
-    radial-gradient(38% 42% at 25% 38%, color-mix(in srgb, var(--green) 40%, white) 0%, transparent 68%),
-    linear-gradient(118deg, transparent 25%, color-mix(in srgb, var(--indigo) 22%, transparent) 48%, transparent 72%),
-    var(--bg);
-  filter: saturate(1.2);
-  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 30%, transparent 96%);
-  mask-image: linear-gradient(to bottom, black 0%, black 30%, transparent 96%);
+  background: linear-gradient(180deg, #b9d0f0 0%, #d7e2f3 42%, #eceef4 72%, var(--bg) 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 25%, transparent 96%);
+  mask-image: linear-gradient(to bottom, black 0%, black 25%, transparent 96%);
 }
 
-/* A faint grain over the mesh — the references all have some texture
-   in their atmospheric areas (cloud/film grain, blurred light); a
-   pure CSS gradient alone reads too clean/digital next to that. */
+/* A faint grain over the sky — the reference shot has that soft
+   photographic haze; a flat gradient alone reads too clean/digital. */
 body::after {
   content: "";
   position: absolute;
   inset: 0 0 auto 0;
-  height: 680px;
+  height: 620px;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.5;
+  opacity: 0.35;
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 30%, transparent 96%);
-  mask-image: linear-gradient(to bottom, black 0%, black 30%, transparent 96%);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 25%, transparent 96%);
+  mask-image: linear-gradient(to bottom, black 0%, black 25%, transparent 96%);
 }
 
-/* The actual cloud wisp — a real blurred element, not a background
-   gradient layer, so it reads as a distinct streak sitting above the
-   mesh rather than blending into its other soft-white highlights.
-   Three overlapping blobs squashed and rotated into an elongated
-   shape, then blurred, the way the reference's wispy cloud stretches
-   thin across the sky. Plain CSS filter: blur on a real box — not an
-   SVG filter used as a background-image — so it's unrelated to the
-   earlier software-GL rendering issue. */
+/* The cloud itself — now the main visual, sized and placed the way the
+   reference photo's wisp sits: a wide, thin, horizontal streak stretched
+   across the open sky, with a denser body and a thinner trailing wisp
+   so it has some depth rather than reading as one flat blur. Real
+   blurred elements, not an SVG filter used as a background-image (that
+   combination rendered as a solid block on some software-GL renderers
+   when tried earlier). */
 .cloud-wisp {
   position: absolute;
-  top: 34px;
-  left: 4%;
-  width: 62%;
-  height: 46px;
+  top: 54px;
+  left: -8%;
+  width: 90%;
+  height: 70px;
   pointer-events: none;
   z-index: 0;
   background:
-    radial-gradient(50% 50% at 28% 50%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.6) 48%, transparent 80%),
-    radial-gradient(50% 50% at 62% 42%, rgba(255, 255, 255, 0.85) 0%, transparent 80%),
-    radial-gradient(50% 55% at 85% 58%, rgba(255, 255, 255, 0.55) 0%, transparent 85%);
-  filter: blur(9px);
-  transform: rotate(-7deg);
-  -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 18%, black 75%, transparent 100%);
-  mask-image: linear-gradient(90deg, transparent 0%, black 18%, black 75%, transparent 100%);
+    radial-gradient(50% 55% at 22% 55%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.55) 45%, transparent 78%),
+    radial-gradient(45% 60% at 48% 40%, rgba(255, 255, 255, 0.9) 0%, transparent 75%),
+    radial-gradient(40% 50% at 70% 60%, rgba(255, 255, 255, 0.8) 0%, transparent 78%),
+    radial-gradient(35% 45% at 90% 50%, rgba(255, 255, 255, 0.55) 0%, transparent 82%);
+  filter: blur(11px);
+  transform: rotate(-4deg);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 14%, black 80%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, black 14%, black 80%, transparent 100%);
+  mix-blend-mode: screen;
+}
+
+/* A thinner trailing wisp beneath the main one, offset and fainter —
+   the layering the reference photo's cloud has, instead of one single
+   flat streak. */
+.cloud-wisp--trail {
+  position: absolute;
+  top: 108px;
+  left: 6%;
+  width: 60%;
+  height: 34px;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(50% 55% at 30% 50%, rgba(255, 255, 255, 0.7) 0%, transparent 78%),
+    radial-gradient(45% 55% at 68% 48%, rgba(255, 255, 255, 0.55) 0%, transparent 80%);
+  filter: blur(10px);
+  transform: rotate(-3deg);
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 20%, black 78%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0%, black 20%, black 78%, transparent 100%);
   mix-blend-mode: screen;
 }
 
